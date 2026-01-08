@@ -28,15 +28,15 @@ type DeleteVariableResponse struct {
 // ============================================
 
 // DeleteVariable deletes a variable
-func (v *VariableManagement) DeleteVariable(ctx context.Context, variable *Variable) error {
+func (v *VariableManagement) DeleteVariable(ctx context.Context, variable string) error {
 	// 1. Validating inputs
-	if variable.Variable == "" {
+	if variable == "" {
 		return fmt.Errorf("variable is required")
 	}
 
 	// 2. Preparing payload
 	reqPayload := DeleteVariableRequest{
-		Variable: variable.Variable,
+		Variable: variable,
 	}
 	requestBody, err := json.Marshal(reqPayload)
 	if err != nil {
