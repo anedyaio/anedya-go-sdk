@@ -1,4 +1,4 @@
-package accesstokens
+package accessTokens
 
 import (
 	"bytes"
@@ -90,7 +90,7 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, token 
 		return nil, fmt.Errorf("request body is empty")
 	}
 	// Validate expiry range
-	if token.Expiry < expiryMaxValue || token.Expiry > expiryMaxValue {
+	if token.Expiry < expiryMinValue || token.Expiry > expiryMaxValue {
 		return nil, fmt.Errorf("Expiry value must lie between %d and %d", expiryMinValue, expiryMaxValue)
 	}
 	// Validate policy
@@ -124,6 +124,7 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, token 
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	// 5. Read response data
 	responseBody, err := io.ReadAll(resp.Body)
