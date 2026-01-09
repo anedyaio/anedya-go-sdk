@@ -1,4 +1,4 @@
-package accessTokens
+package accesstokens
 
 import (
 	"bytes"
@@ -46,18 +46,11 @@ type Policy struct {
 	Allow     []string            `json:"allow"`
 }
 
-// BaseResponse contains common fields returned by the API.
-type BaseResponse struct {
-	Success    bool   `json:"success"`
-	Error      string `json:"error"`
-	ReasonCode string `json:"reasonCode"`
-}
-
 // CreateNewAccessTokenRequest represents the request from CreateNewAccessToken API
 /*
 	Request Body example:
 	{
-	"expiry": 0,
+	"expiry": 1,
 	"policy": {
 		"resources": {},
 		"allow": [
@@ -69,6 +62,13 @@ type BaseResponse struct {
 type CreateNewAccessTokenRequest struct {
 	Expiry int `json:"expiry"` // Required  1 <= expiry <=7776000
 	Policy     // Required
+}
+
+// BaseResponse contains common fields returned by the API.
+type BaseResponse struct {
+	Success    bool   `json:"success"`
+	Error      string `json:"error"`
+	ReasonCode string `json:"reasonCode"`
 }
 
 // CreateNewAccessTokenResponse represents the response from CreateNewAccessToken API
@@ -83,6 +83,9 @@ const (
 	expiryMinValue int = 1       // Minimum expiry in seconds
 )
 
+// ============================================
+// API Methods
+// ============================================
 // CreateNewAccessToken creates a new access token.
 func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, token *CreateNewAccessTokenRequest) (*Token, error) {
 	// 1. Validate inputs
