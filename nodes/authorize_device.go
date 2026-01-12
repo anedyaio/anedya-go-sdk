@@ -16,12 +16,12 @@ import (
 type AuthorizeDeviceRequest struct {
 	// NodeID represents the target node UUID.
 	// This field is mandatory.
-	NodeID string `json:"nodeid"`
+	NodeID string `json:"nodeId"`
 
 	// DeviceID represents the unique identifier of the physical device
 	// (e.g., MAC address, serial number).
 	// This field is mandatory.
-	DeviceID string `json:"deviceid"`
+	DeviceID string `json:"deviceId"`
 }
 
 // AuthorizeDeviceResponse represents the API response structure
