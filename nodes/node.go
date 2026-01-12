@@ -32,38 +32,3 @@ func NewNodeManagement(c *http.Client, baseURL string) *NodeManagement {
 		baseURL:    baseURL,
 	}
 }
-
-// func (nm *NodeManagement) CreateNode(ctx context.Context, node *Node) (*Node, error) {
-
-// 	// implement the logic for http request
-
-// 	return &Node{
-// 		nodeManagement: nm,
-// 	}, nil
-// }
-
-// func (nm *NodeManagement) GetNode(ctx context.Context, nodeId string) (*Node, error) {
-// 	return &Node{
-// 		nodeManagement: nm,
-// 	}, nil
-// }
-
-// func (nm *NodeManagement) UpdateNodeName(ctx context.Context, nodeName string) (*Node, error) {
-// 	return &Node{
-// 		nodeManagement: nm,
-// 	}, nil
-// }
-
-// func (nm *NodeManagement) UpdateNodeName(ctx context.Context, nodeName string) (*Node, error) {
-// 	return &Node{
-// 		nodeManagement: nm,
-// 	}, nil
-// }
-
-// ===========================
-// Node Level Methods
-// ===========================
-// func (n *Node) UpdateNodeName(ctx context.Context, name string) error {
-// 	n.nodeManagement.UpdateNodeName(ctx, name)
-// 	return nil
-// }
