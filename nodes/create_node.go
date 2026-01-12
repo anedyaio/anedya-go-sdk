@@ -10,10 +10,10 @@ import (
 
 // CreateNodeRequest defines the request body for creating a node
 type CreateNodeRequest struct {
-	NodeName  string `json:"node_name"`
-	NodeDesc  string `json:"node_desc,omitempty"`
-	Tags      []Tag  `json:"tags,omitempty"`
-	PreauthId string `json:"preauth_id,omitempty"`
+	NodeName        string `json:"nodeName"`
+	NodeDescription string `json:"nodeDescription,omitempty"`
+	Tags            []Tag  `json:"tags,omitempty"`
+	PreauthId       string `json:"preauthId,omitempty"`
 }
 
 // CreateNodeResponse defines the API response (used for both success and error)
