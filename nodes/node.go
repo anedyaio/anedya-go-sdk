@@ -10,9 +10,9 @@ type Node struct {
 
 	NodeId          string `json:"nodeId,omitempty"`
 	NodeName        string `json:"nodeName,omitempty"`
-	NodeDescription string `json:"nodeDesc,omitempty"`
+	NodeDescription string `json:"nodeDescription,omitempty"`
 	Tags            []Tag  `json:"tags,omitempty"`
-	PreauthId       string `json:"preauth_id,omitempty"`
+	PreauthId       string `json:"preauthId,omitempty"`
 }
 
 // Tag represents key-value tag for node
