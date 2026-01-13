@@ -61,7 +61,7 @@ type CreateVariableResponse struct {
 }
 
 // ValidVariableTypes contains all valid variable types
-var ValidVariableTypes = []string{"geo", "float"}
+var ValidVariableTypes = []string{"geo", "float"}      // remove global variable
 
 func isValidVariableType(variableType string) bool {
 	for _, v := range ValidVariableTypes {
