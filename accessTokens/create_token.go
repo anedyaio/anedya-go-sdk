@@ -12,7 +12,7 @@ import (
 type Token struct {
 	tokenManagement *AccessTokenManagement
 
-	Policy
+	Policy  Policy `json:"policy"`
 	Expiry  int    `json:"expiry"`
 	TokenID string `json:"tokenId"`
 	Token   string `json:"token"`
@@ -42,8 +42,8 @@ func NewAccessTokenManagement(c *http.Client, baseURL string) *AccessTokenManage
 
 // Policy represents the acess policy for the token
 type Policy struct {
-	Resources map[string]struct{} `json:"resources"`
-	Allow     []string            `json:"allow"`
+	Resources map[string]interface{} `json:"resources,omitempty"`
+	Allow     []string               `json:"allow"`
 }
 
 // CreateNewAccessTokenRequest represents the request from CreateNewAccessToken API
@@ -60,8 +60,8 @@ type Policy struct {
 	}
 */
 type CreateNewAccessTokenRequest struct {
-	Expiry int `json:"expiry"` // Required  1 <= expiry <=7776000
-	Policy     // Required
+	Expiry int    `json:"expiry"` // Required  1 <= expiry <=7776000
+	Policy Policy `json:"policy"` // Required
 }
 
 // BaseResponse contains common fields returned by the API.
@@ -104,19 +104,23 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, token 
 	// 2. Prepare payload
 	reqPayload := CreateNewAccessTokenRequest{
 		Expiry: token.Expiry,
-		Policy: token.Policy,
+		Policy: Policy{
+			Resources: token.Policy.Resources,
+			Allow:     token.Policy.Allow,
+		},
 	}
+	fmt.Printf("requestPayload is %v\n", reqPayload)
 	requestBody, err := json.Marshal(reqPayload)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
-
+	fmt.Printf("Request JSON: %s\n", string(requestBody))
 	// 3. Create HTTP Request
 	// assuming baseUrl to be "https://api.ap-in-1.anedya.io"
 	url := fmt.Sprintf("%s/v1/access/tokens/create", t.baseURL)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
