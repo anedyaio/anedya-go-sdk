@@ -6,7 +6,6 @@ import (
 	"fmt"
 )
 
-
 // AnedyaError represents a structured SDK or API error.
 //
 // It wraps a sentinel error for programmatic checks and includes
