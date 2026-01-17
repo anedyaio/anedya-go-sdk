@@ -5,10 +5,12 @@ import (
 	"time"
 
 	"github.com/anedyaio/anedya-go-sdk/nodes"
+	"github.com/anedyaio/anedya-go-sdk/variable"
 )
 
 type Client struct {
-	NodeManagement *nodes.NodeManagement
+	NodeManagement     *nodes.NodeManagement
+	VariableManagement *variable.VariableManagement
 }
 
 func NewClient(apiKey, baseURL string) *Client {
@@ -24,6 +26,7 @@ func NewClient(apiKey, baseURL string) *Client {
 	}
 
 	return &Client{
-		NodeManagement: nodes.NewNodeManagement(hc, baseURL),
+		NodeManagement:     nodes.NewNodeManagement(hc, baseURL),
+		VariableManagement: variable.NewVariableManagement(hc, baseURL),
 	}
 }
