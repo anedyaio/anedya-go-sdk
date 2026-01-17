@@ -1,3 +1,4 @@
+// Package variable provides APIs to manage variables in the Anedya platform.
 package variable
 
 import (
@@ -7,81 +8,124 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// ============================================
-// API request and response Structs
-// ============================================
-
-// DeleteVariableRequest represents the request body for DeleteVariable API
+// DeleteVariableRequest represents the payload sent to the
+// Delete Variable API endpoint.
+//
+// It identifies the variable to be deleted using its unique
+// variable key or path.
 type DeleteVariableRequest struct {
-	Variable string `json:"variable"` // Required
+
+	// Variable specifies the unique variable key or path
+	// that identifies the variable to be deleted.
+	//
+	// This field is required.
+	Variable string `json:"variable"`
 }
 
-// DeleteVariableResponse represents the response from DeleteVariable API
+
+// DeleteVariableResponse represents the response returned by
+// the Delete Variable API endpoint.
+//
+// It embeds BaseResponse, which contains the standard API
+// success flag, error message, and reason code.
 type DeleteVariableResponse struct {
 	BaseResponse
 }
 
-// ============================================
-// API Methods
-// ============================================
 
-// DeleteVariable deletes a variable
-func (v *VariableManagement) DeleteVariable(ctx context.Context, variable string) error {
-	// 1. Validating inputs
+// DeleteVariable deletes an existing variable from the Anedya platform.
+//
+// The variable to be deleted is identified by its variable key or path,
+// which must be provided as a non-empty string.
+//
+// The method performs the following steps:
+//
+//   1. Validates the input variable identifier.
+//   2. Encodes the request payload as JSON.
+//   3. Builds and sends an HTTP request.
+//   4. Reads and decodes the API response.
+//   5. Maps API errors into structured SDK errors.
+//
+// Validation errors are returned as sentinel errors defined in the
+// errors package. All other failures return *errors.AnedyaError.
+func (v *VariableManagement) DeleteVariable(ctx context.Context,variable string) error {
+
+	// 1. Validate input
 	if variable == "" {
-		return fmt.Errorf("variable is required")
+		return errors.ErrVariableRequired
 	}
 
-	// 2. Preparing payload
+	// 2. Prepare request payload
 	reqPayload := DeleteVariableRequest{
 		Variable: variable,
 	}
+
 	requestBody, err := json.Marshal(reqPayload)
 	if err != nil {
-		return err
+		return &errors.AnedyaError{
+			Message: "failed to encode DeleteVariable request",
+			Err:     errors.ErrRequestEncodeFailed,
+		}
 	}
 
-	// 3. Create Request
-	// assuming baseUrl to be "https://api.ap-in-1.anedya.io"
+	// 3. Build HTTP request
 	url := fmt.Sprintf("%s/v1/variables/delete", v.baseURL)
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		url,
+		bytes.NewBuffer(requestBody),
+	)
 	if err != nil {
-		return err
+		return &errors.AnedyaError{
+			Message: "failed to build DeleteVariable request",
+			Err:     errors.ErrRequestBuildFailed,
+		}
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	// 4. Execute Request
+	// 4. Execute request
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
-		return err
+		return &errors.AnedyaError{
+			Message: "failed to execute DeleteVariable request",
+			Err:     errors.ErrRequestFailed,
+		}
 	}
 	defer resp.Body.Close()
 
-	// 5. Read response data
+	// 5. Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return &errors.AnedyaError{
+			Message: "failed to read DeleteVariable response",
+			Err:     errors.ErrResponseReadFailed,
+		}
 	}
 
-	// 6. Check for status code
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("api failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	// 7. Decode response
+	// 6. Decode API response
 	var apiResp DeleteVariableResponse
-
-	err = json.Unmarshal(body, &apiResp)
-	if err != nil {
-		return fmt.Errorf("failed to parse reponse: %w", err)
+	if err := json.Unmarshal(body, &apiResp); err != nil {
+		return &errors.AnedyaError{
+			Message: "failed to decode DeleteVariable response",
+			Err:     errors.ErrResponseDecodeFailed,
+		}
 	}
 
+	// 7. Handle HTTP-level errors
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	}
+
+	// 8. Handle API-level errors
 	if !apiResp.Success {
-		return fmt.Errorf("API error: %s", apiResp.Error)
+		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	return nil
