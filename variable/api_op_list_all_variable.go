@@ -12,7 +12,6 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-
 // ListAllVariableRequest represents the payload sent to the
 // List Variables API endpoint.
 //
@@ -28,7 +27,6 @@ type ListAllVariableRequest struct {
 	// before starting to return results.
 	OffSet int `json:"offset"`
 }
-
 
 // VariableListItem represents a single variable entry returned
 // by the List Variables API.
@@ -53,7 +51,6 @@ type VariableListItem struct {
 	Description string `json:"desc"`
 }
 
-
 // ListAllVariableResponse represents the response returned by
 // the List Variables API endpoint.
 type ListAllVariableResponse struct {
@@ -73,7 +70,6 @@ type ListAllVariableResponse struct {
 	NodeParams []VariableListItem `json:"nodeParams"`
 }
 
-
 // ListVariablesResult represents the SDK-friendly result returned
 // to the caller after converting API response objects.
 type ListVariablesResult struct {
@@ -91,7 +87,6 @@ type ListVariablesResult struct {
 	TotalCount int
 }
 
-
 // ListAllVariable retrieves a paginated list of variables from
 // the Anedya platform.
 //
@@ -106,23 +101,23 @@ type ListVariablesResult struct {
 // Output:
 //
 //   - On success, the method returns a *ListVariablesResult containing:
-//       1) a slice of Variable objects
-//       2) pagination metadata (current count, offset, total count)
+//     1) a slice of Variable objects
+//     2) pagination metadata (current count, offset, total count)
 //
 //   - On failure, the method returns a non-nil error.
 //
 // The method performs the following steps:
 //
-//   1. Validates and normalizes pagination inputs.
-//   2. Encodes the request payload as JSON.
-//   3. Builds and sends an HTTP request.
-//   4. Reads and decodes the API response.
-//   5. Converts API objects into SDK Variable structures.
+//   - Validates and normalizes pagination inputs.
+//   - Encodes the request payload as JSON.
+//   - Builds and sends an HTTP request.
+//   - Reads and decodes the API response.
+//   - Converts API objects into SDK Variable structures.
 //
 // Validation and transport failures are returned as structured SDK errors
 // using *errors.AnedyaError. API-level failures are mapped using the
 // error reason codes returned by the server.
-func (v *VariableManagement) ListAllVariable(ctx context.Context,limit int,offset int) (*ListVariablesResult, error) {
+func (v *VariableManagement) ListAllVariable(ctx context.Context, limit int, offset int) (*ListVariablesResult, error) {
 
 	// 1. Validate and normalize inputs
 	if limit <= 0 {

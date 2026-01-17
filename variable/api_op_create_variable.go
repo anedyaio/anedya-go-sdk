@@ -13,7 +13,6 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-
 // Variable represents a variable resource returned by the Anedya API.
 //
 // A Variable uniquely identifies a telemetry or configuration field
@@ -57,7 +56,6 @@ type Variable struct {
 	TTL int `json:"ttl,omitempty"`
 }
 
-
 // VariableManagement provides methods to create, update, delete,
 // and retrieve variables from the Anedya API.
 //
@@ -73,7 +71,6 @@ type VariableManagement struct {
 	baseURL string
 }
 
-
 // NewVariableManagement creates a new VariableManagement client.
 //
 // The provided http.Client is used for all network communication,
@@ -84,7 +81,6 @@ func NewVariableManagement(c *http.Client, baseURL string) *VariableManagement {
 		baseURL:    baseURL,
 	}
 }
-
 
 // CreateVariableRequest represents the payload sent to the
 // Create Variable API endpoint.
@@ -114,7 +110,6 @@ type CreateVariableRequest struct {
 	TTL int `json:"ttl,omitempty"`
 }
 
-
 // BaseResponse represents common fields returned by all
 // Anedya API responses.
 type BaseResponse struct {
@@ -131,7 +126,6 @@ type BaseResponse struct {
 	ReasonCode string `json:"reasonCode"`
 }
 
-
 // CreateVariableResponse represents the response returned by
 // the Create Variable API endpoint.
 type CreateVariableResponse struct {
@@ -140,7 +134,6 @@ type CreateVariableResponse struct {
 	// VariableID is the identifier of the newly created variable.
 	VariableID string `json:"variableId"`
 }
-
 
 // CreateVariable creates a new variable in the Anedya platform.
 //
@@ -165,7 +158,7 @@ func (v *VariableManagement) CreateVariable(ctx context.Context, input *CreateVa
 
 	// 1. Validate input payload.
 	if input == nil {
-		return nil, errors.ErrVariableRequired
+		return nil, errors.ErrInputRequired
 	}
 
 	if input.Name == "" {
@@ -246,6 +239,12 @@ func (v *VariableManagement) CreateVariable(ctx context.Context, input *CreateVa
 
 	// 9. Return created variable.
 	return &Variable{
-		VariableID: apiResp.VariableID,
+		variableManagement: v,
+		VariableID:         apiResp.VariableID,
+		Type:               input.Type,
+		Name:               input.Name,
+		Description:        input.Description,
+		Variable:           input.Variable,
+		TTL:                input.TTL,
 	}, nil
 }

@@ -26,7 +26,6 @@ type DeleteVariableRequest struct {
 	Variable string `json:"variable"`
 }
 
-
 // DeleteVariableResponse represents the response returned by
 // the Delete Variable API endpoint.
 //
@@ -36,7 +35,6 @@ type DeleteVariableResponse struct {
 	BaseResponse
 }
 
-
 // DeleteVariable deletes an existing variable from the Anedya platform.
 //
 // The variable to be deleted is identified by its variable key or path,
@@ -44,15 +42,15 @@ type DeleteVariableResponse struct {
 //
 // The method performs the following steps:
 //
-//   1. Validates the input variable identifier.
-//   2. Encodes the request payload as JSON.
-//   3. Builds and sends an HTTP request.
-//   4. Reads and decodes the API response.
-//   5. Maps API errors into structured SDK errors.
+//  1. Validates the input variable identifier.
+//  2. Encodes the request payload as JSON.
+//  3. Builds and sends an HTTP request.
+//  4. Reads and decodes the API response.
+//  5. Maps API errors into structured SDK errors.
 //
 // Validation errors are returned as sentinel errors defined in the
 // errors package. All other failures return *errors.AnedyaError.
-func (v *VariableManagement) DeleteVariable(ctx context.Context,variable string) error {
+func (v *VariableManagement) DeleteVariable(ctx context.Context, variable string) error {
 
 	// 1. Validate input
 	if variable == "" {

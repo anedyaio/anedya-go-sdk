@@ -10,6 +10,10 @@ import "errors"
 
 // Generic SDK errors used by ALL APIs.
 var (
+
+	// ErrInputRequired indicates that a required request input was not provided.
+	ErrInputRequired = errors.New("input is required")
+
 	// ErrRequestEncodeFailed indicates a failure while encoding
 	// or serializing the request payload.
 	ErrRequestEncodeFailed = errors.New("request encode failed")
