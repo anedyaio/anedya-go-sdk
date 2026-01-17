@@ -21,6 +21,9 @@ var (
 	// ErrRequestFailed indicates a failure during HTTP request execution.
 	ErrRequestFailed = errors.New("request failed")
 
+	// ErrResponseReadFailed indicates that reading the HTTP response body failed.
+	ErrResponseReadFailed = errors.New("response read failed")
+
 	// ErrResponseDecodeFailed indicates a failure while decoding
 	// the API response body.
 	ErrResponseDecodeFailed = errors.New("response decode failed")
