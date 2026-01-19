@@ -52,14 +52,20 @@ func (nm *NodeManagement) DeleteNode(
 	req *DeleteNodeRequest,
 ) error {
 
-	// Validate request object is not nil
+	// Validate request object
 	if req == nil {
-		return errors.ErrDeleteNodeRequestNil
+		return &errors.AnedyaError{
+			Message: "delete node request cannot be nil",
+			Err:     errors.ErrDeleteNodeRequestNil,
+		}
 	}
 
-	// Validate NodeID is provided
+	// Validate NodeID
 	if req.NodeID == "" {
-		return errors.ErrDeleteNodeIDRequired
+		return &errors.AnedyaError{
+			Message: "node id is required to delete node",
+			Err:     errors.ErrDeleteNodeIDRequired,
+		}
 	}
 
 	// Construct API endpoint URL
@@ -98,7 +104,7 @@ func (nm *NodeManagement) DeleteNode(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into DeleteNodeResponse
+	// Decode response JSON
 	var apiResp DeleteNodeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return &errors.AnedyaError{
@@ -107,16 +113,16 @@ func (nm *NodeManagement) DeleteNode(
 		}
 	}
 
-	// Check HTTP status code for success
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Operation successful
+	// Delete successful
 	return nil
 }

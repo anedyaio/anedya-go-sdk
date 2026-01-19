@@ -57,14 +57,20 @@ func (nm *NodeManagement) GetConnectionKey(
 	req *GetConnectionKeyRequest,
 ) (string, error) {
 
-	// Validate request object is not nil
+	// Validate request object
 	if req == nil {
-		return "", errors.ErrGetConnectionKeyRequestNil
+		return "", &errors.AnedyaError{
+			Message: "get connection key request cannot be nil",
+			Err:     errors.ErrGetConnectionKeyRequestNil,
+		}
 	}
 
-	// Validate NodeID is provided
+	// Validate NodeID
 	if req.NodeID == "" {
-		return "", errors.ErrGetConnectionKeyNodeIDRequired
+		return "", &errors.AnedyaError{
+			Message: "node id is required to get connection key",
+			Err:     errors.ErrGetConnectionKeyNodeIDRequired,
+		}
 	}
 
 	// Construct API endpoint URL
@@ -103,7 +109,7 @@ func (nm *NodeManagement) GetConnectionKey(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into GetConnectionKeyResponse
+	// Decode response JSON
 	var apiResp GetConnectionKeyResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return "", &errors.AnedyaError{
@@ -112,16 +118,16 @@ func (nm *NodeManagement) GetConnectionKey(
 		}
 	}
 
-	// Check HTTP status code for success
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return "", errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return "", errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Return the connection key
+	// Success
 	return apiResp.ConnectionKey, nil
 }

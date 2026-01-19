@@ -64,32 +64,50 @@ type AddChildNodeResponse struct {
 //     or API errors occur.
 func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeRequest) error {
 
-	// Validate that request object is not nil
+	// Validate request object
 	if req == nil {
-		return errors.ErrAddChildNodeRequestNil
+		return &errors.AnedyaError{
+			Message: "add child node request cannot be nil",
+			Err:     errors.ErrAddChildNodeRequestNil,
+		}
 	}
 
-	// Validate that ParentId is provided
+	// Validate ParentId
 	if req.ParentId == "" {
-		return errors.ErrAddChildNodeParentIDRequired
+		return &errors.AnedyaError{
+			Message: "parentId is required to add child nodes",
+			Err:     errors.ErrAddChildNodeParentIDRequired,
+		}
 	}
 
-	// Validate that at least one child node is provided
+	// Validate child nodes list
 	if len(req.ChildNodes) == 0 {
-		return errors.ErrAddChildNodeEmptyChildren
+		return &errors.AnedyaError{
+			Message: "at least one child node must be provided",
+			Err:     errors.ErrAddChildNodeEmptyChildren,
+		}
 	}
 
 	// Validate each child node
 	for _, c := range req.ChildNodes {
-		if c.NodeId == "" || c.Alias == "" {
-			return errors.ErrAddChildNodeInvalidChild
+		if c.NodeId == "" {
+			return &errors.AnedyaError{
+				Message: "child nodeId is required",
+				Err:     errors.ErrAddChildNodeInvalidChild,
+			}
+		}
+		if c.Alias == "" {
+			return &errors.AnedyaError{
+				Message: "child node alias is required",
+				Err:     errors.ErrAddChildNodeInvalidChild,
+			}
 		}
 	}
 
 	// Construct API endpoint URL
 	url := fmt.Sprintf("%s/v1/node/child/add", nm.baseURL)
 
-	// Marshal request payload to JSON
+	// Marshal request payload
 	body, err := json.Marshal(req)
 	if err != nil {
 		return &errors.AnedyaError{
@@ -98,7 +116,7 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 		}
 	}
 
-	// Build HTTP POST request with context
+	// Build HTTP request
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -122,7 +140,7 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// Decode API response
 	var apiResp AddChildNodeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return &errors.AnedyaError{

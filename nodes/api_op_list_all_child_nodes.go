@@ -88,12 +88,18 @@ func (nm *NodeManagement) ListChildNodes(
 
 	// Validate request object
 	if req == nil {
-		return nil, errors.ErrListChildNodesRequestNil
+		return nil, &errors.AnedyaError{
+			Message: "list child nodes request cannot be nil",
+			Err:     errors.ErrListChildNodesRequestNil,
+		}
 	}
 
-	// Validate mandatory ParentId field
+	// Validate ParentId
 	if req.ParentId == "" {
-		return nil, errors.ErrListChildNodesParentIDRequired
+		return nil, &errors.AnedyaError{
+			Message: "parent id is required to list child nodes",
+			Err:     errors.ErrListChildNodesParentIDRequired,
+		}
 	}
 
 	// Apply default and boundary values for pagination
@@ -141,7 +147,7 @@ func (nm *NodeManagement) ListChildNodes(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into ListChildNodesResponse
+	// Decode response JSON
 	var apiResp ListChildNodesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
@@ -150,16 +156,16 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Check HTTP status code
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Return child nodes response
+	// Success
 	return &apiResp, nil
 }

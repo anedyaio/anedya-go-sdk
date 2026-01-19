@@ -57,9 +57,12 @@ func (nm *NodeManagement) GetNodeDetails(
 	req *GetNodeDetailsRequest,
 ) (map[string]Node, error) {
 
-	// Validate request object and ensure at least one node ID is provided
+	// Validate request
 	if req == nil || len(req.Nodes) == 0 {
-		return nil, errors.ErrNodeListRequestNil
+		return nil, &errors.AnedyaError{
+			Message: "node list cannot be empty",
+			Err:     errors.ErrNodeListRequestNil,
+		}
 	}
 
 	// Construct API endpoint URL

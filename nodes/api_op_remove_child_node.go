@@ -61,17 +61,26 @@ func (nm *NodeManagement) RemoveChildNode(
 
 	// Validate request object
 	if req == nil {
-		return errors.ErrRemoveChildNodeRequestNil
+		return &errors.AnedyaError{
+			Message: "remove child node request cannot be nil",
+			Err:     errors.ErrRemoveChildNodeRequestNil,
+		}
 	}
 
 	// Validate mandatory ParentId
 	if req.ParentId == "" {
-		return errors.ErrRemoveChildNodeParentIDRequired
+		return &errors.AnedyaError{
+			Message: "parent id is required to remove child node",
+			Err:     errors.ErrRemoveChildNodeParentIDRequired,
+		}
 	}
 
 	// Validate mandatory ChildNode
 	if req.ChildNode == "" {
-		return errors.ErrRemoveChildNodeChildIDRequired
+		return &errors.AnedyaError{
+			Message: "child node id is required to remove child node",
+			Err:     errors.ErrRemoveChildNodeChildIDRequired,
+		}
 	}
 
 	// Construct API endpoint URL
@@ -129,6 +138,6 @@ func (nm *NodeManagement) RemoveChildNode(
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Return nil on success
+	// Success
 	return nil
 }

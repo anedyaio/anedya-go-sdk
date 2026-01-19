@@ -66,9 +66,20 @@ func (nm *NodeManagement) CreateNode(
 	req *CreateNodeRequest,
 ) (*Node, error) {
 
-	// Validate NodeName is provided
+	// Validate request object
+	if req == nil {
+		return nil, &errors.AnedyaError{
+			Message: "create node request cannot be nil",
+			Err:     errors.ErrInputRequired,
+		}
+	}
+
+	// Validate NodeName
 	if req.NodeName == "" {
-		return nil, errors.ErrNodeNameRequired
+		return nil, &errors.AnedyaError{
+			Message: "node name is required",
+			Err:     errors.ErrNodeNameRequired,
+		}
 	}
 
 	// Marshal request payload to JSON
@@ -107,7 +118,7 @@ func (nm *NodeManagement) CreateNode(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into CreateNodeResponse
+	// Decode response JSON
 	var apiResp CreateNodeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
@@ -116,22 +127,22 @@ func (nm *NodeManagement) CreateNode(
 		}
 	}
 
-	// Check HTTP status code for success
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Return a Node instance representing the newly created node
+	// Return Node
 	return &Node{
-		nodeManagement:  nm,
 		NodeId:          apiResp.NodeId,
 		NodeName:        req.NodeName,
 		NodeDescription: req.NodeDesc,
 		Tags:            req.Tags,
+		nodeManagement:  nm,
 	}, nil
 }

@@ -93,17 +93,26 @@ func (nm *NodeManagement) UpdateNode(
 
 	// Validate request object
 	if req == nil {
-		return errors.ErrUpdateNodeRequestNil
+		return &errors.AnedyaError{
+			Message: "update node request cannot be nil",
+			Err:     errors.ErrUpdateNodeRequestNil,
+		}
 	}
 
 	// Validate mandatory NodeID
 	if req.NodeID == "" {
-		return errors.ErrUpdateNodeIDRequired
+		return &errors.AnedyaError{
+			Message: "nodeID is required for update",
+			Err:     errors.ErrUpdateNodeIDRequired,
+		}
 	}
 
 	// Ensure at least one update operation is provided
 	if len(req.Updates) == 0 {
-		return errors.ErrUpdateNodeEmptyUpdates
+		return &errors.AnedyaError{
+			Message: "at least one update operation must be provided",
+			Err:     errors.ErrUpdateNodeEmptyUpdates,
+		}
 	}
 
 	// Validate each update operation

@@ -57,19 +57,28 @@ func (nm *NodeManagement) AuthorizeDevice(
 	req *AuthorizeDeviceRequest,
 ) error {
 
-	// Validate request object is not nil
+	// Validate request object
 	if req == nil {
-		return errors.ErrAuthorizeDeviceRequestNil
+		return &errors.AnedyaError{
+			Message: "authorize device request cannot be nil",
+			Err:     errors.ErrAuthorizeDeviceRequestNil,
+		}
 	}
 
-	// Validate NodeID is provided
+	// Validate NodeID
 	if req.NodeID == "" {
-		return errors.ErrAuthorizeDeviceNodeIDRequired
+		return &errors.AnedyaError{
+			Message: "nodeId is required to authorize device",
+			Err:     errors.ErrAuthorizeDeviceNodeIDRequired,
+		}
 	}
 
-	// Validate DeviceID is provided
+	// Validate DeviceID
 	if req.DeviceID == "" {
-		return errors.ErrAuthorizeDeviceDeviceIDRequired
+		return &errors.AnedyaError{
+			Message: "deviceId is required to authorize device",
+			Err:     errors.ErrAuthorizeDeviceDeviceIDRequired,
+		}
 	}
 
 	// Construct API endpoint URL
@@ -108,7 +117,7 @@ func (nm *NodeManagement) AuthorizeDevice(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into AuthorizeDeviceResponse
+	// Decode response JSON
 	var apiResp AuthorizeDeviceResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return &errors.AnedyaError{
@@ -117,16 +126,15 @@ func (nm *NodeManagement) AuthorizeDevice(
 		}
 	}
 
-	// Check HTTP status code for success
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Authorization successful
 	return nil
 }

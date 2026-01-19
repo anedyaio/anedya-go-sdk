@@ -53,14 +53,20 @@ func (nm *NodeManagement) ClearChildNodes(
 	req *ClearChildNodesRequest,
 ) error {
 
-	// Validate request object is not nil
+	// Validate request object
 	if req == nil {
-		return errors.ErrClearChildNodesRequestNil
+		return &errors.AnedyaError{
+			Message: "clear child nodes request cannot be nil",
+			Err:     errors.ErrClearChildNodesRequestNil,
+		}
 	}
 
-	// Validate ParentId is provided
+	// Validate ParentId
 	if req.ParentId == "" {
-		return errors.ErrClearChildNodesParentIDRequired
+		return &errors.AnedyaError{
+			Message: "parentId is required to clear child nodes",
+			Err:     errors.ErrClearChildNodesParentIDRequired,
+		}
 	}
 
 	// Construct API endpoint URL
@@ -99,7 +105,7 @@ func (nm *NodeManagement) ClearChildNodes(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into ClearChildNodesResponse
+	// Decode response JSON
 	var apiResp ClearChildNodesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return &errors.AnedyaError{
@@ -108,16 +114,15 @@ func (nm *NodeManagement) ClearChildNodes(
 		}
 	}
 
-	// Check HTTP status code for success
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Operation successful
 	return nil
 }

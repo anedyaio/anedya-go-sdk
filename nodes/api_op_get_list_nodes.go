@@ -75,19 +75,28 @@ func (nm *NodeManagement) GetNodeList(
 	req *GetNodeListRequest,
 ) (*GetNodeListResponse, error) {
 
-	// Validate request object is not nil
+	// Validate request object
 	if req == nil {
-		return nil, errors.ErrNodeListRequestNil
+		return nil, &errors.AnedyaError{
+			Message: "get node list request cannot be nil",
+			Err:     errors.ErrNodeListRequestNil,
+		}
 	}
 
-	// Validate Limit is within allowed range
+	// Validate Limit
 	if req.Limit <= 0 || req.Limit > 1000 {
-		return nil, errors.ErrNodeListInvalidLimit
+		return nil, &errors.AnedyaError{
+			Message: "limit must be between 1 and 1000",
+			Err:     errors.ErrNodeListInvalidLimit,
+		}
 	}
 
-	// Validate Order is either "asc" or "desc"
+	// Validate Order
 	if req.Order != "asc" && req.Order != "desc" {
-		return nil, errors.ErrNodeListInvalidOrder
+		return nil, &errors.AnedyaError{
+			Message: "order must be either 'asc' or 'desc'",
+			Err:     errors.ErrNodeListInvalidOrder,
+		}
 	}
 
 	// Construct API endpoint URL
@@ -126,7 +135,7 @@ func (nm *NodeManagement) GetNodeList(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into GetNodeListResponse
+	// Decode response JSON
 	var apiResp GetNodeListResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
@@ -135,16 +144,16 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// Check HTTP status code for success
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Return the node list response
+	// Success
 	return &apiResp, nil
 }
