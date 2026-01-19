@@ -93,7 +93,7 @@ func (nm *NodeManagement) ListChildNodes(
 
 	// Validate mandatory ParentId field
 	if req.ParentId == "" {
-		return nil, errors.ErrListChildNodesParentIdRequired
+		return nil, errors.ErrListChildNodesParentIDRequired
 	}
 
 	// Apply default and boundary values for pagination

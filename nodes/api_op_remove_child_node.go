@@ -66,12 +66,12 @@ func (nm *NodeManagement) RemoveChildNode(
 
 	// Validate mandatory ParentId
 	if req.ParentId == "" {
-		return errors.ErrRemoveChildNodeParentIdRequired
+		return errors.ErrRemoveChildNodeParentIDRequired
 	}
 
 	// Validate mandatory ChildNode
 	if req.ChildNode == "" {
-		return errors.ErrRemoveChildNodeChildIdRequired
+		return errors.ErrRemoveChildNodeChildIDRequired
 	}
 
 	// Construct API endpoint URL

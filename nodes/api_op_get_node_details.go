@@ -18,43 +18,6 @@ type GetNodeDetailsRequest struct {
 	Nodes []string `json:"nodes"`
 }
 
-// NodeDetails represents the complete metadata of a single node
-// returned by the Get Node Details API.
-type NodeDetails struct {
-	// NodeId is the unique identifier of the node.
-	NodeId string `json:"nodeId"`
-
-	// NodeName is the human-readable name of the node.
-	NodeName string `json:"node_name,omitempty"`
-
-	// NodeDescription describes the node.
-	NodeDescription string `json:"node_desc,omitempty"`
-
-	// NodeIdentifier is the external identifier associated with the node.
-	NodeIdentifier string `json:"nodeIdentifier,omitempty"`
-
-	// BindingStatus indicates whether the node is currently bound.
-	BindingStatus bool `json:"bindingstatus,omitempty"`
-
-	// NodeBindingKey is the binding key assigned to the node.
-	NodeBindingKey string `json:"nodebindingkey,omitempty"`
-
-	// ConnectionKey is the connection key used by the node.
-	ConnectionKey string `json:"connectionKey,omitempty"`
-
-	// CreatedAt indicates when the node was created.
-	CreatedAt string `json:"created,omitempty"`
-
-	// Suspended indicates whether the node is currently suspended.
-	Suspended bool `json:"suspended,omitempty"`
-
-	// Modified indicates the last modification timestamp of the node.
-	Modified string `json:"modified,omitempty"`
-
-	// Tags contains metadata tags associated with the node.
-	Tags []Tag `json:"tags,omitempty"`
-}
-
 // GetNodeDetailsResponse represents the response returned by the Get Node Details API.
 type GetNodeDetailsResponse struct {
 	// Success indicates whether the request was processed successfully.
@@ -68,7 +31,7 @@ type GetNodeDetailsResponse struct {
 	ReasonCode string `json:"reasonCode,omitempty"`
 
 	// Data contains node details mapped by node ID.
-	Data map[string]NodeDetails `json:"data,omitempty"`
+	Data map[string]Node `json:"data,omitempty"`
 }
 
 // GetNodeDetails retrieves detailed information for one or more nodes from the Anedya platform.
@@ -92,7 +55,7 @@ type GetNodeDetailsResponse struct {
 func (nm *NodeManagement) GetNodeDetails(
 	ctx context.Context,
 	req *GetNodeDetailsRequest,
-) (map[string]NodeDetails, error) {
+) (map[string]Node, error) {
 
 	// Validate request object and ensure at least one node ID is provided
 	if req == nil || len(req.Nodes) == 0 {

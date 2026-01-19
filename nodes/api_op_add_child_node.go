@@ -71,7 +71,7 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 
 	// Validate that ParentId is provided
 	if req.ParentId == "" {
-		return errors.ErrAddChildNodeParentIdRequired
+		return errors.ErrAddChildNodeParentIDRequired
 	}
 
 	// Validate that at least one child node is provided
@@ -79,16 +79,10 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 		return errors.ErrAddChildNodeEmptyChildren
 	}
 
-	// Validate each child node: both NodeId and Alias are required
-	for i, c := range req.ChildNodes {
+	// Validate each child node
+	for _, c := range req.ChildNodes {
 		if c.NodeId == "" || c.Alias == "" {
-			return &errors.AnedyaError{
-				Message: fmt.Sprintf(
-					"childNodes[%d] requires both nodeId and alias",
-					i,
-				),
-				Err: fmt.Errorf("invalid child node entry"),
-			}
+			return errors.ErrAddChildNodeInvalidChild
 		}
 	}
 
@@ -128,7 +122,7 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into AddChildNodeResponse
+	// Decode response JSON
 	var apiResp AddChildNodeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return &errors.AnedyaError{
@@ -137,16 +131,15 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 		}
 	}
 
-	// Check HTTP status code for success
+	// HTTP-level error
 	if resp.StatusCode != http.StatusOK {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
+	// API-level error
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Operation successful
 	return nil
 }

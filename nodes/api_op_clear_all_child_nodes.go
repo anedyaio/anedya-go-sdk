@@ -60,7 +60,7 @@ func (nm *NodeManagement) ClearChildNodes(
 
 	// Validate ParentId is provided
 	if req.ParentId == "" {
-		return errors.ErrClearChildNodesParentIdRequired
+		return errors.ErrClearChildNodesParentIDRequired
 	}
 
 	// Construct API endpoint URL

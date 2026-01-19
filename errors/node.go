@@ -1,204 +1,175 @@
+// Package errors defines validation and API errors
+// used by the Node Management APIs in the Anedya Go SDK.
 package errors
 
-import "fmt"
+import "errors"
 
-// -------- CreateNode Errors --------
+// ----------------------------------------------------
+// CreateNode validation errors
+// ----------------------------------------------------
 
-// ErrNodeNameRequired is thrown when someone tries to create a node
-// without providing the `node_name`. This is mandatory for creating any node.
 var (
-	ErrNodeNameRequired = &AnedyaError{
-		Message: "node_name is required",
-		Err:     ErrVariableNameRequired,
-	}
+	// ErrNodeNameRequired is returned when the node_name
+	// field is missing or empty while creating a node.
+	ErrNodeNameRequired = errors.New("node_name is required")
 )
 
-// -------- GetNodeList Errors --------
+// ----------------------------------------------------
+// GetNodeList validation errors
+// ----------------------------------------------------
 
-// ErrNodeListRequestNil is returned when the GetNodeList request itself is nil.
-// Always make sure you pass a valid request object.
 var (
-	ErrNodeListRequestNil = &AnedyaError{
-		Message: "GetNodeListRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrNodeListRequestNil is returned when the
+	// GetNodeList request is nil.
+	ErrNodeListRequestNil = errors.New("GetNodeListRequest cannot be nil")
 
-	// ErrNodeListInvalidLimit happens when the `limit` provided is not in the valid range.
-	// Limit should always be between 1 and 1000.
-	ErrNodeListInvalidLimit = &AnedyaError{
-		Message: "limit must be between 1 and 1000",
-		Err:     fmt.Errorf("invalid limit"),
-	}
+	// ErrNodeListInvalidLimit is returned when limit
+	// is not between 1 and 1000.
+	ErrNodeListInvalidLimit = errors.New("limit must be between 1 and 1000")
 
-	// ErrNodeListInvalidOrder occurs if `order` is neither 'asc' nor 'desc'.
-	ErrNodeListInvalidOrder = &AnedyaError{
-		Message: "order must be either 'asc' or 'desc'",
-		Err:     fmt.Errorf("invalid order"),
-	}
+	// ErrNodeListInvalidOrder is returned when order
+	// is neither 'asc' nor 'desc'.
+	ErrNodeListInvalidOrder = errors.New("order must be either 'asc' or 'desc'")
 )
 
-// -------- GetNodeDetails Errors --------
+// ----------------------------------------------------
+// GetNodeDetails validation errors
+// ----------------------------------------------------
 
-// ErrNodeDetailsRequestNil is returned when the nodes list is empty or missing
-// while fetching node details. Always pass at least one node ID.
 var (
-	ErrNodeDetailsRequestNil = &AnedyaError{
-		Message: "`nodes` list is required",
-		Err:     fmt.Errorf("nodes list is empty"),
-	}
+	// ErrNodeDetailsRequestNil is returned when the nodes
+	// list is missing or empty.
+	ErrNodeDetailsRequestNil = errors.New("nodes list is required")
 )
 
-// -------- AddChildNode Errors --------
+// ----------------------------------------------------
+// AddChildNode validation errors
+// ----------------------------------------------------
 
-// ErrAddChildNodeRequestNil is returned when the AddChildNodeRequest is nil.
-// We cannot proceed without a proper request.
 var (
-	ErrAddChildNodeRequestNil = &AnedyaError{
-		Message: "AddChildNodeRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrAddChildNodeRequestNil is returned when the
+	// AddChildNode request is nil.
+	ErrAddChildNodeRequestNil = errors.New("AddChildNodeRequest cannot be nil")
 
-	// ErrAddChildNodeParentIdRequired is returned when `parentId` is missing.
-	// Every child node must have a parent.
-	ErrAddChildNodeParentIdRequired = &AnedyaError{
-		Message: "`parentId` is required",
-		Err:     fmt.Errorf("parentId missing"),
-	}
+	// ErrAddChildNodeParentIDRequired is returned when
+	// parentId is missing.
+	ErrAddChildNodeParentIDRequired = errors.New("parentId is required")
 
-	// ErrAddChildNodeEmptyChildren occurs when no child nodes are provided
-	// in the request. We need at least one child node.
-	ErrAddChildNodeEmptyChildren = &AnedyaError{
-		Message: "at least one child node must be provided",
-		Err:     fmt.Errorf("childNodes empty"),
-	}
+	// ErrAddChildNodeEmptyChildren is returned when
+	// no child nodes are provided.
+	ErrAddChildNodeEmptyChildren = errors.New("at least one child node must be provided")
+
+	// ErrAddChildNodeInvalidChild is returned when a child node
+	// entry is missing nodeId or alias.
+	ErrAddChildNodeInvalidChild = errors.New("each child node requires both nodeId and alias")
 )
 
-// -------- RemoveChildNode Errors --------
+// ----------------------------------------------------
+// RemoveChildNode validation errors
+// ----------------------------------------------------
 
-// ErrRemoveChildNodeRequestNil is returned when the RemoveChildNode request is nil.
 var (
-	ErrRemoveChildNodeRequestNil = &AnedyaError{
-		Message: "RemoveChildNodeRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrRemoveChildNodeRequestNil is returned when the
+	// RemoveChildNode request is nil.
+	ErrRemoveChildNodeRequestNil = errors.New("RemoveChildNodeRequest cannot be nil")
 
-	// ErrRemoveChildNodeParentIdRequired occurs if `parentId` is missing.
-	ErrRemoveChildNodeParentIdRequired = &AnedyaError{
-		Message: "`parentId` is required",
-		Err:     fmt.Errorf("parentId missing"),
-	}
+	// ErrRemoveChildNodeParentIDRequired is returned when
+	// parentId is missing.
+	ErrRemoveChildNodeParentIDRequired = errors.New("parentId is required")
 
-	// ErrRemoveChildNodeChildIdRequired occurs if `childNode` is missing in the request.
-	ErrRemoveChildNodeChildIdRequired = &AnedyaError{
-		Message: "`childNode` is required",
-		Err:     fmt.Errorf("childNode missing"),
-	}
+	// ErrRemoveChildNodeChildIDRequired is returned when
+	// childNode is missing.
+	ErrRemoveChildNodeChildIDRequired = errors.New("childNode is required")
 )
 
-// -------- ClearChildNodes Errors --------
+// ----------------------------------------------------
+// ClearChildNodes validation errors
+// ----------------------------------------------------
 
-// ErrClearChildNodesRequestNil happens when the request object is nil.
 var (
-	ErrClearChildNodesRequestNil = &AnedyaError{
-		Message: "ClearChildNodesRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrClearChildNodesRequestNil is returned when the
+	// ClearChildNodes request is nil.
+	ErrClearChildNodesRequestNil = errors.New("ClearChildNodesRequest cannot be nil")
 
-	// ErrClearChildNodesParentIdRequired happens if parentId is not provided.
-	ErrClearChildNodesParentIdRequired = &AnedyaError{
-		Message: "`parentId` is required",
-		Err:     fmt.Errorf("parentId missing"),
-	}
+	// ErrClearChildNodesParentIDRequired is returned when
+	// parentId is missing.
+	ErrClearChildNodesParentIDRequired = errors.New("parentId is required")
 )
 
-// -------- ListChildNodes Errors --------
+// ----------------------------------------------------
+// ListChildNodes validation errors
+// ----------------------------------------------------
 
-// ErrListChildNodesRequestNil happens when the request object is nil.
 var (
-	ErrListChildNodesRequestNil = &AnedyaError{
-		Message: "ListChildNodesRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrListChildNodesRequestNil is returned when the
+	// ListChildNodes request is nil.
+	ErrListChildNodesRequestNil = errors.New("ListChildNodesRequest cannot be nil")
 
-	// ErrListChildNodesParentIdRequired occurs when parentId is missing in the request.
-	ErrListChildNodesParentIdRequired = &AnedyaError{
-		Message: "`parentId` is required",
-		Err:     fmt.Errorf("parentId missing"),
-	}
+	// ErrListChildNodesParentIDRequired is returned when
+	// parentId is missing.
+	ErrListChildNodesParentIDRequired = errors.New("parentId is required")
 )
 
-// -------- GetConnectionKey Errors --------
+// ----------------------------------------------------
+// GetConnectionKey validation errors
+// ----------------------------------------------------
 
-// ErrGetConnectionKeyRequestNil is returned when request object is nil.
 var (
-	ErrGetConnectionKeyRequestNil = &AnedyaError{
-		Message: "GetConnectionKeyRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrGetConnectionKeyRequestNil is returned when the
+	// GetConnectionKey request is nil.
+	ErrGetConnectionKeyRequestNil = errors.New("GetConnectionKeyRequest cannot be nil")
 
-	// ErrGetConnectionKeyNodeIDRequired occurs when nodeid is missing.
-	ErrGetConnectionKeyNodeIDRequired = &AnedyaError{
-		Message: "`nodeid` is required",
-		Err:     fmt.Errorf("nodeid missing"),
-	}
+	// ErrGetConnectionKeyNodeIDRequired is returned when
+	// nodeid is missing.
+	ErrGetConnectionKeyNodeIDRequired = errors.New("nodeid is required")
 )
 
-// -------- UpdateNode Errors --------
+// ----------------------------------------------------
+// UpdateNode validation errors
+// ----------------------------------------------------
 
-// ErrUpdateNodeRequestNil happens when request object is nil.
 var (
-	ErrUpdateNodeRequestNil = &AnedyaError{
-		Message: "UpdateNodeRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrUpdateNodeRequestNil is returned when the
+	// UpdateNode request is nil.
+	ErrUpdateNodeRequestNil = errors.New("UpdateNodeRequest cannot be nil")
 
-	// ErrUpdateNodeIDRequired occurs when nodeid is missing in update request.
-	ErrUpdateNodeIDRequired = &AnedyaError{
-		Message: "`nodeid` is required",
-		Err:     fmt.Errorf("nodeid missing"),
-	}
+	// ErrUpdateNodeIDRequired is returned when
+	// nodeid is missing.
+	ErrUpdateNodeIDRequired = errors.New("nodeid is required")
 
-	// ErrUpdateNodeEmptyUpdates occurs when no updates are provided in the request.
-	ErrUpdateNodeEmptyUpdates = &AnedyaError{
-		Message: "`updates` must contain at least one update operation",
-		Err:     fmt.Errorf("no updates provided"),
-	}
+	// ErrUpdateNodeEmptyUpdates is returned when
+	// no updates are provided.
+	ErrUpdateNodeEmptyUpdates = errors.New("updates must contain at least one update operation")
 )
 
-// -------- AuthorizeDevice Errors --------
+// ----------------------------------------------------
+// AuthorizeDevice validation errors
+// ----------------------------------------------------
 
-// ErrAuthorizeDeviceRequestNil occurs when the request object is nil.
 var (
-	ErrAuthorizeDeviceRequestNil = &AnedyaError{
-		Message: "AuthorizeDeviceRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrAuthorizeDeviceRequestNil is returned when the
+	// AuthorizeDevice request is nil.
+	ErrAuthorizeDeviceRequestNil = errors.New("AuthorizeDeviceRequest cannot be nil")
 
-	// ErrAuthorizeDeviceNodeIDRequired occurs when nodeid is missing in request.
-	ErrAuthorizeDeviceNodeIDRequired = &AnedyaError{
-		Message: "`nodeid` is required",
-		Err:     fmt.Errorf("nodeid missing"),
-	}
+	// ErrAuthorizeDeviceNodeIDRequired is returned when
+	// nodeid is missing.
+	ErrAuthorizeDeviceNodeIDRequired = errors.New("nodeid is required")
 
-	// ErrAuthorizeDeviceDeviceIDRequired occurs when deviceid is missing.
-	ErrAuthorizeDeviceDeviceIDRequired = &AnedyaError{
-		Message: "`deviceid` is required",
-		Err:     fmt.Errorf("deviceid missing"),
-	}
+	// ErrAuthorizeDeviceDeviceIDRequired is returned when
+	// deviceid is missing.
+	ErrAuthorizeDeviceDeviceIDRequired = errors.New("deviceid is required")
 )
 
-// -------- DeleteNode Errors --------
+// ----------------------------------------------------
+// DeleteNode validation errors
+// ----------------------------------------------------
 
-// ErrDeleteNodeRequestNil happens when request object is nil.
 var (
-	ErrDeleteNodeRequestNil = &AnedyaError{
-		Message: "DeleteNodeRequest cannot be nil",
-		Err:     fmt.Errorf("request is nil"),
-	}
+	// ErrDeleteNodeRequestNil is returned when the
+	// DeleteNode request is nil.
+	ErrDeleteNodeRequestNil = errors.New("DeleteNodeRequest cannot be nil")
 
-	// ErrDeleteNodeIDRequired occurs when nodeid is missing in delete request.
-	ErrDeleteNodeIDRequired = &AnedyaError{
-		Message: "`nodeid` is required",
-		Err:     fmt.Errorf("nodeid missing"),
-	}
+	// ErrDeleteNodeIDRequired is returned when
+	// nodeid is missing.
+	ErrDeleteNodeIDRequired = errors.New("nodeid is required")
 )
