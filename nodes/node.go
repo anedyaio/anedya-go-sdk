@@ -219,7 +219,7 @@ func (n *Node) AuthorizeDevice(ctx context.Context, deviceID string) error {
 	if deviceID == "" {
 		return &errors.AnedyaError{
 			Message: "deviceID is required",
-			Err:     errors.ErrInvalidInput, // ya koi generic ErrInvalidInput
+			Err:     errors.ErrInputRequired,
 		}
 	}
 
@@ -346,7 +346,7 @@ func (n *Node) RemoveChildNode(ctx context.Context, childNodeID string) error {
 	if childNodeID == "" {
 		return &errors.AnedyaError{
 			Message: "childNodeID is required",
-			Err:     errors.ErrInvalidParameter,
+			Err:     errors.ErrInputRequired,
 		}
 	}
 
