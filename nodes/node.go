@@ -2,9 +2,10 @@ package nodes
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
 // Node represents a device or logical entity registered on the Anedya platform.
@@ -80,7 +81,10 @@ func NewNodeManagement(c *http.Client, baseURL string) *NodeManagement {
 //   - error: Error if NodeManagement is nil, node not found, or API call fails
 func (n *Node) GetDetails(ctx context.Context) (*Node, error) {
 	if n.nodeManagement == nil {
-		return nil, errors.New("node management client is not initialized")
+		return nil, &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
 	}
 
 	req := &GetNodeDetailsRequest{
@@ -94,9 +98,13 @@ func (n *Node) GetDetails(ctx context.Context) (*Node, error) {
 
 	details, ok := data[n.NodeId]
 	if !ok {
-		return nil, errors.New("node details not found")
+		return nil, &errors.AnedyaError{
+			Message: "node details not found for node id: " + n.NodeId,
+			Err:     errors.ErrNodeNotFound,
+		}
 	}
 
+	// Assign API response fields directly to Node struct
 	n.NodeName = details.NodeName
 	n.NodeDescription = details.NodeDescription
 	n.NodeIdentifier = details.NodeIdentifier
@@ -128,7 +136,10 @@ func (n *Node) GetDetails(ctx context.Context) (*Node, error) {
 //   - error: Error if NodeManagement is nil or API call fails
 func (n *Node) ListChildNodes(ctx context.Context, limit int, offset int) ([]*Node, error) {
 	if n.nodeManagement == nil {
-		return nil, errors.New("node management client is not initialized")
+		return nil, &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
 	}
 
 	req := &ListChildNodesRequest{
@@ -147,7 +158,7 @@ func (n *Node) ListChildNodes(ctx context.Context, limit int, offset int) ([]*No
 		node := &Node{
 			NodeId:         child.ChildId,
 			NodeName:       child.Alias,
-			CreatedAt:      fmt.Sprintf("%d", child.CreatedAt),
+			CreatedAt:      fmt.Sprintf("%d", child.CreatedAt), // string format, Node struct me string field assumed
 			nodeManagement: n.nodeManagement,
 		}
 		nodes = append(nodes, node)
@@ -170,7 +181,10 @@ func (n *Node) ListChildNodes(ctx context.Context, limit int, offset int) ([]*No
 //   - error: Error if NodeManagement is nil or API call fails
 func (n *Node) UpdateNode(ctx context.Context, updates []NodeUpdate) error {
 	if n.nodeManagement == nil {
-		return errors.New("node management client is not initialized")
+		return &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
 	}
 
 	req := &UpdateNodeRequest{
@@ -178,7 +192,12 @@ func (n *Node) UpdateNode(ctx context.Context, updates []NodeUpdate) error {
 		Updates: updates,
 	}
 
-	return n.nodeManagement.UpdateNode(ctx, req)
+	// Call NodeManagement UpdateNode method
+	if err := n.nodeManagement.UpdateNode(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // AuthorizeDevice authorizes a device to connect with this node.
@@ -191,11 +210,17 @@ func (n *Node) UpdateNode(ctx context.Context, updates []NodeUpdate) error {
 //   - error: Error if NodeManagement is nil, deviceID is empty, or API call fails
 func (n *Node) AuthorizeDevice(ctx context.Context, deviceID string) error {
 	if n.nodeManagement == nil {
-		return errors.New("node management client is not initialized")
+		return &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
 	}
 
 	if deviceID == "" {
-		return errors.New("deviceID is required")
+		return &errors.AnedyaError{
+			Message: "deviceID is required",
+			Err:     errors.ErrInvalidInput, // ya koi generic ErrInvalidInput
+		}
 	}
 
 	req := &AuthorizeDeviceRequest{
@@ -203,7 +228,12 @@ func (n *Node) AuthorizeDevice(ctx context.Context, deviceID string) error {
 		DeviceID: deviceID,
 	}
 
-	return n.nodeManagement.AuthorizeDevice(ctx, req)
+	// Call NodeManagement method
+	if err := n.nodeManagement.AuthorizeDevice(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // AddChildNode attaches one or more child nodes to this node.
@@ -216,7 +246,17 @@ func (n *Node) AuthorizeDevice(ctx context.Context, deviceID string) error {
 //   - error: Error if NodeManagement is nil or API call fails
 func (n *Node) AddChildNode(ctx context.Context, childNodes []ChildNodeRequest) error {
 	if n.nodeManagement == nil {
-		return errors.New("node management client is not initialized")
+		return &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
+	}
+
+	if len(childNodes) == 0 {
+		return &errors.AnedyaError{
+			Message: "childNodes cannot be empty",
+			Err:     errors.ErrInputRequired,
+		}
 	}
 
 	req := &AddChildNodeRequest{
@@ -224,7 +264,11 @@ func (n *Node) AddChildNode(ctx context.Context, childNodes []ChildNodeRequest) 
 		ChildNodes: childNodes,
 	}
 
-	return n.nodeManagement.AddChildNode(ctx, req)
+	if err := n.nodeManagement.AddChildNode(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // ClearChildNodes removes all child nodes attached to this node.
@@ -236,14 +280,21 @@ func (n *Node) AddChildNode(ctx context.Context, childNodes []ChildNodeRequest) 
 //   - error: Error if NodeManagement is nil or API call fails
 func (n *Node) ClearChildNodes(ctx context.Context) error {
 	if n.nodeManagement == nil {
-		return errors.New("node management client is not initialized")
+		return &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
 	}
 
 	req := &ClearChildNodesRequest{
 		ParentId: n.NodeId,
 	}
 
-	return n.nodeManagement.ClearChildNodes(ctx, req)
+	if err := n.nodeManagement.ClearChildNodes(ctx, req); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // GetConnectionKey retrieves the connection key for this node.
@@ -258,14 +309,22 @@ func (n *Node) ClearChildNodes(ctx context.Context) error {
 //   - error: Error if NodeManagement is nil or API call fails
 func (n *Node) GetConnectionKey(ctx context.Context) (string, error) {
 	if n.nodeManagement == nil {
-		return "", errors.New("node management client is not initialized")
+		return "", &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
 	}
 
 	req := &GetConnectionKeyRequest{
 		NodeID: n.NodeId,
 	}
 
-	return n.nodeManagement.GetConnectionKey(ctx, req)
+	key, err := n.nodeManagement.GetConnectionKey(ctx, req)
+	if err != nil {
+		return "", err
+	}
+
+	return key, nil
 }
 
 // RemoveChildNode detaches a specific child node from this node.
@@ -278,7 +337,17 @@ func (n *Node) GetConnectionKey(ctx context.Context) (string, error) {
 //   - error: Error if NodeManagement is nil or API call fails
 func (n *Node) RemoveChildNode(ctx context.Context, childNodeID string) error {
 	if n.nodeManagement == nil {
-		return errors.New("node management client is not initialized")
+		return &errors.AnedyaError{
+			Message: "node management client is not initialized",
+			Err:     errors.ErrNodeManagementNotInitialized,
+		}
+	}
+
+	if childNodeID == "" {
+		return &errors.AnedyaError{
+			Message: "childNodeID is required",
+			Err:     errors.ErrInvalidParameter,
+		}
 	}
 
 	req := &RemoveChildNodeRequest{
@@ -286,5 +355,10 @@ func (n *Node) RemoveChildNode(ctx context.Context, childNodeID string) error {
 		ChildNode: childNodeID,
 	}
 
-	return n.nodeManagement.RemoveChildNode(ctx, req)
+	err := n.nodeManagement.RemoveChildNode(ctx, req)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

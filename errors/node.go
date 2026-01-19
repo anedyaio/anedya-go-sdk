@@ -173,3 +173,9 @@ var (
 	// nodeid is missing.
 	ErrDeleteNodeIDRequired = errors.New("nodeid is required")
 )
+
+// ErrNodeManagementNotInitialized is returned when NodeManagement client is nil
+var ErrNodeManagementNotInitialized = errors.New("node management client is not initialized")
+
+// ErrNodeNotFound is returned when node details are not found
+var ErrNodeNotFound = errors.New("node not found")
