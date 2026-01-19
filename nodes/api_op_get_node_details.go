@@ -61,7 +61,7 @@ func (nm *NodeManagement) GetNodeDetails(
 	if req == nil || len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "node list cannot be empty",
-			Err:     errors.ErrNodeListRequestNil,
+			Err:     errors.ErrNodeDetailsRequestNil,
 		}
 	}
 

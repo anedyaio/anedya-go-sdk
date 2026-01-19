@@ -74,14 +74,6 @@ func (nm *NodeManagement) CreateNode(
 		}
 	}
 
-	// Validate NodeName
-	if req.NodeName == "" {
-		return nil, &errors.AnedyaError{
-			Message: "node name is required",
-			Err:     errors.ErrNodeNameRequired,
-		}
-	}
-
 	// Marshal request payload to JSON
 	body, err := json.Marshal(req)
 	if err != nil {
