@@ -7,19 +7,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// ============================================
-// API request and response structs
-// ============================================
-
 // RevokeAcessTokenRequest represents the request from RevokeAcsessToken API
-/*
-	Request Body example:
-	{
-	"tokenId": "string"
-	}
-*/
 type RevokeAccessTokenRequest struct {
 	TokenID string `json:"tokenId"`
 }
@@ -29,14 +21,14 @@ type RevokeAccessTokenResponse struct {
 	BaseResponse
 }
 
-// ============================================
-// API Methods
-// ============================================
 // RevokeAccessToken revokes any issued token by providing tokenID
 func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId string) error {
 	// 1. Validate Inputs
 	if tokenId == "" {
-		return fmt.Errorf("tokenId is required")
+		return &errors.AnedyaError{
+			Message: "tokenId is required",
+			Err:     errors.ErrTokenIdRequired,
+		}
 	}
 
 	// 2. Prepare payload
@@ -45,15 +37,21 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 	}
 	requestBody, err := json.Marshal(reqPayload)
 	if err != nil {
-		return fmt.Errorf("failed to marshal request %w", err)
+		return &errors.AnedyaError{
+			Message: "failed to encode revoke token request",
+			Err:     errors.ErrRequestEncodeFailed,
+		}
 	}
 
 	// 3. Create HTTP request
 	// assuming baseUrl to be "https://api.ap-in-1.anedya.io"
 	url := fmt.Sprintf("%s/v1/access/tokens/revoke", t.baseURL)
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(requestBody))
 	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
+		return &errors.AnedyaError{
+			Message: "failed to build revoke token request",
+			Err:     errors.ErrRequestBuildFailed,
+		}
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -62,19 +60,20 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 	// 4. Execute Request
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("request failed: %w", err)
+		return &errors.AnedyaError{
+			Message: "failed to execute revoke token request",
+			Err:     errors.ErrRequestFailed,
+		}
 	}
 	defer resp.Body.Close()
 
 	// 5. Read response data
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
-	}
-
-	// 6. Check for status codes
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return fmt.Errorf("api failed with status %d: %s", resp.StatusCode, string(responseBody))
+		return &errors.AnedyaError{
+			Message: "failed to read revoke token response ",
+			Err:     errors.ErrResponseReadFailed,
+		}
 	}
 
 	// 7. Decode response
@@ -82,11 +81,19 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 
 	err = json.Unmarshal(responseBody, &apiResp)
 	if err != nil {
-		return fmt.Errorf("failed to parse response: %w", err)
+		return &errors.AnedyaError{
+			Message: "failed to decode revoke token response",
+			Err:     errors.ErrResponseDecodeFailed,
+		}
+	}
+
+	// 6. Check for status codes
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	if !apiResp.Success {
-		return fmt.Errorf("API error: %s", apiResp.Error)
+		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	return nil
