@@ -155,8 +155,6 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	fmt.Printf("%+v\n", apiResp)
-
 	// Centralized API error handling
 	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
