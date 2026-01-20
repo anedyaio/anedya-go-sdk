@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	stdErrors "errors" // alias standard library errors
 	"fmt"
 	"net/http"
 
@@ -120,25 +119,9 @@ func (nm *NodeManagement) CreateNode(
 		}
 	}
 
-	// HTTP-level error
-	if resp.StatusCode != http.StatusOK {
+	// Check for any error (HTTP or API-level)
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// API-level logical error
-	if !apiResp.Success {
-		sdkErr := errors.GetError(apiResp.ReasonCode, apiResp.Error)
-
-		// Explicit check for device ID exists error
-		if stdErrors.Is(sdkErr, errors.ErrNodeDeviceIDExists) {
-			return nil, &errors.AnedyaError{
-				Message: "node creation failed: device ID already exists",
-				Err:     errors.ErrNodeDeviceIDExists,
-			}
-		}
-
-		// Return other API errors
-		return nil, sdkErr
 	}
 
 	// Success: return the newly created Node
