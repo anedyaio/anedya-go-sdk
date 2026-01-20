@@ -4,15 +4,17 @@ import (
 	"net/http"
 	"time"
 
+	accesstokens "github.com/anedyaio/anedya-go-sdk/accessTokens"
 	"github.com/anedyaio/anedya-go-sdk/dataAccess"
 	"github.com/anedyaio/anedya-go-sdk/nodes"
 	"github.com/anedyaio/anedya-go-sdk/variable"
 )
 
 type Client struct {
-	NodeManagement     *nodes.NodeManagement
-	VariableManagement *variable.VariableManagement
-	DataManagement     *dataAccess.DataManagement
+	NodeManagement        *nodes.NodeManagement
+	VariableManagement    *variable.VariableManagement
+	DataManagement       *dataAccess.DataManagement
+	AccessTokenManagement *accesstokens.AccessTokenManagement
 }
 
 func NewClient(apiKey, baseURL string) *Client {
@@ -28,8 +30,9 @@ func NewClient(apiKey, baseURL string) *Client {
 	}
 
 	return &Client{
-		NodeManagement:     nodes.NewNodeManagement(hc, baseURL),
-		VariableManagement: variable.NewVariableManagement(hc, baseURL),
-		DataManagement:     dataAccess.NewDataManagement(hc, baseURL),
+		NodeManagement:        nodes.NewNodeManagement(hc, baseURL),
+		VariableManagement:    variable.NewVariableManagement(hc, baseURL),
+		DataManagement:       dataAccess.NewDataManagement(hc, baseURL),
+		AccessTokenManagement: accesstokens.NewAccessTokenManagement(hc, baseURL),
 	}
 }

@@ -158,15 +158,24 @@ func (v *VariableManagement) CreateVariable(ctx context.Context, input *CreateVa
 
 	// 1. Validate input payload.
 	if input == nil {
-		return nil, errors.ErrInputRequired
+		return nil, &errors.AnedyaError{
+			Message: "Input is required",
+			Err:     errors.ErrInputRequired,
+		}
 	}
 
 	if input.Name == "" {
-		return nil, errors.ErrVariableNameRequired
+		return nil, &errors.AnedyaError{
+			Message: "Input name is requried",
+			Err:     errors.ErrVariableNameRequired,
+		}
 	}
 
 	if input.Variable == "" {
-		return nil, errors.ErrVariableRequired
+		return nil, &errors.AnedyaError{
+			Message: "Input variable is required",
+			Err:     errors.ErrVariableRequired,
+		}
 	}
 
 	validTypes := map[string]bool{
