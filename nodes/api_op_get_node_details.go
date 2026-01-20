@@ -61,12 +61,9 @@ func (nm *NodeManagement) GetNodeDetails(
 	if req == nil || len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "node list cannot be empty",
-			Err:     errors.ErrNodeListRequestNil,
+			Err:     errors.ErrNodeDetailsRequestNil,
 		}
 	}
-
-	// Construct API endpoint URL
-	url := fmt.Sprintf("%s/v1/node/details", nm.baseURL)
 
 	// Marshal request payload to JSON
 	body, err := json.Marshal(req)
@@ -77,13 +74,11 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
+	// Construct API endpoint URL
+	url := fmt.Sprintf("%s/v1/node/details", nm.baseURL)
+
 	// Build HTTP POST request with context
-	httpReq, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		url,
-		bytes.NewBuffer(body),
-	)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to build GetNodeDetails request",
@@ -101,7 +96,7 @@ func (nm *NodeManagement) GetNodeDetails(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON into GetNodeDetailsResponse
+	// Decode response JSON
 	var apiResp GetNodeDetailsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
@@ -110,16 +105,11 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// Check HTTP status code for success
-	if resp.StatusCode != http.StatusOK {
+	// Handle HTTP or API errors
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success flag
-	if !apiResp.Success {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// Return the node details map
+	// Success: return the node details map
 	return apiResp.Data, nil
 }

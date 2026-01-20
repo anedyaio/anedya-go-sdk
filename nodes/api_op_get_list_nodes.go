@@ -99,9 +99,6 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// Construct API endpoint URL
-	url := fmt.Sprintf("%s/v1/node/list", nm.baseURL)
-
 	// Marshal request payload to JSON
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -111,13 +108,11 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
+	// Construct API endpoint URL
+	url := fmt.Sprintf("%s/v1/node/list", nm.baseURL)
+
 	// Build HTTP POST request with context
-	httpReq, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		url,
-		bytes.NewBuffer(body),
-	)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to build GetNodeList request",
@@ -135,7 +130,7 @@ func (nm *NodeManagement) GetNodeList(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// Decode API response
 	var apiResp GetNodeListResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
@@ -149,9 +144,11 @@ func (nm *NodeManagement) GetNodeList(
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// API-level error
+	// API-level error handling
 	if !apiResp.Success {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+		sdkErr := errors.GetError(apiResp.ReasonCode, apiResp.Error)
+		// Return any other API errors
+		return nil, sdkErr
 	}
 
 	// Success

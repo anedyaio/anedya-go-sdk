@@ -126,13 +126,8 @@ func (nm *NodeManagement) AuthorizeDevice(
 		}
 	}
 
-	// HTTP-level error
-	if resp.StatusCode != http.StatusOK {
-		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// API-level error
-	if !apiResp.Success {
+	// handle HTTP or API level error
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

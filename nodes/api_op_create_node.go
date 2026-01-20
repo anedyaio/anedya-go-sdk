@@ -74,14 +74,6 @@ func (nm *NodeManagement) CreateNode(
 		}
 	}
 
-	// Validate NodeName
-	if req.NodeName == "" {
-		return nil, &errors.AnedyaError{
-			Message: "node name is required",
-			Err:     errors.ErrNodeNameRequired,
-		}
-	}
-
 	// Marshal request payload to JSON
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -127,17 +119,12 @@ func (nm *NodeManagement) CreateNode(
 		}
 	}
 
-	// HTTP-level error
-	if resp.StatusCode != http.StatusOK {
+	// Check for any error (HTTP or API-level)
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// API-level error
-	if !apiResp.Success {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// Return Node
+	// Success: return the newly created Node
 	return &Node{
 		NodeId:          apiResp.NodeId,
 		NodeName:        req.NodeName,

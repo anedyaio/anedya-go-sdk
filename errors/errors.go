@@ -30,9 +30,25 @@ func (e *AnedyaError) Unwrap() error {
 
 // codeMap maps API reason codes to SDK sentinel errors.
 var codeMap = map[string]error{
+	// node errors
+	"node::devidexists":          ErrNodeDeviceIDExists,
+	"node::childexists":          ErrNodeChildExists,
+	"node::uniquealiasviolation": ErrNodeUniqueAliasViolation,
+	"node::uniquechildviolation": ErrNodeUniqueChildViolation,
+	"node::childnotfound":        ErrNodeChildNotFound,
+	"node::invalidparentid":      ErrNodeInvalidParentID,
+	"node::invalidchildid":       ErrNodeInvalidChildID,
+	"node::nodenotfound":         ErrNodeNotFound,
+	"node::devicenotfound":       ErrNodeDeviceNotFound,
+	"node::invaliduuid":          ErrNodeInvalidUUID,
+
 	"variable::namerequired":     ErrVariableNameRequired,
 	"variable::variablerequired": ErrVariableRequired,
 	"variable::typerequired":     ErrVariableTypeRequired,
+
+	//auth
+	"auth::accessdenied":  ErrAccessDenied,
+	"auth::tokennotfound": ErrTokenNotFound,
 }
 
 // GetError converts an API reason code and message into an AnedyaError.
