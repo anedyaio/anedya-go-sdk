@@ -54,39 +54,28 @@ type RemoveChildNodeResponse struct {
 // Returns:
 //   - error: Returns nil on success, otherwise a sentinel error or *errors.AnedyaError
 //     if validation, network, or API-level errors occur.
-func (nm *NodeManagement) RemoveChildNode(
-	ctx context.Context,
-	req *RemoveChildNodeRequest,
-) error {
+func (nm *NodeManagement) RemoveChildNode(ctx context.Context, req *RemoveChildNodeRequest) error {
 
-	// Validate request object
 	if req == nil {
 		return &errors.AnedyaError{
 			Message: "remove child node request cannot be nil",
 			Err:     errors.ErrRemoveChildNodeRequestNil,
 		}
 	}
-
-	// Validate mandatory ParentId
 	if req.ParentId == "" {
 		return &errors.AnedyaError{
-			Message: "parent id is required to remove child node",
+			Message: "parent id is required",
 			Err:     errors.ErrRemoveChildNodeParentIDRequired,
 		}
 	}
-
-	// Validate mandatory ChildNode
 	if req.ChildNode == "" {
 		return &errors.AnedyaError{
-			Message: "child node id is required to remove child node",
+			Message: "child node id is required",
 			Err:     errors.ErrRemoveChildNodeChildIDRequired,
 		}
 	}
 
-	// Construct API endpoint URL
 	url := fmt.Sprintf("%s/v1/node/child/remove", nm.baseURL)
-
-	// Marshal request payload into JSON
 	body, err := json.Marshal(req)
 	if err != nil {
 		return &errors.AnedyaError{
@@ -95,21 +84,15 @@ func (nm *NodeManagement) RemoveChildNode(
 		}
 	}
 
-	// Build HTTP POST request with context
-	httpReq, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		url,
-		bytes.NewBuffer(body),
-	)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return &errors.AnedyaError{
 			Message: "failed to build RemoveChildNode request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
+	httpReq.Header.Set("Content-Type", "application/json")
 
-	// Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return &errors.AnedyaError{
@@ -119,7 +102,6 @@ func (nm *NodeManagement) RemoveChildNode(
 	}
 	defer resp.Body.Close()
 
-	// Decode API response JSON
 	var apiResp RemoveChildNodeResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return &errors.AnedyaError{
@@ -128,16 +110,10 @@ func (nm *NodeManagement) RemoveChildNode(
 		}
 	}
 
-	// Check HTTP status code
-	if resp.StatusCode != http.StatusOK {
+	// Handle all API errors automatically
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Check API-level success
-	if !apiResp.Success {
-		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// Success
 	return nil
 }

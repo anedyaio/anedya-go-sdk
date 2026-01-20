@@ -86,7 +86,7 @@ func (nm *NodeManagement) ListChildNodes(
 	req *ListChildNodesRequest,
 ) (*ListChildNodesResponse, error) {
 
-	// Validate request object
+	// Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "list child nodes request cannot be nil",
@@ -94,7 +94,6 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Validate ParentId
 	if req.ParentId == "" {
 		return nil, &errors.AnedyaError{
 			Message: "parent id is required to list child nodes",
@@ -102,19 +101,18 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Apply default and boundary values for pagination
+	// Apply pagination defaults
 	if req.Limit <= 0 || req.Limit > 1000 {
 		req.Limit = 100
 	}
-
 	if req.Offset < 0 {
 		req.Offset = 0
 	}
 
-	// Construct API endpoint URL
+	// Endpoint
 	url := fmt.Sprintf("%s/v1/node/child/list", nm.baseURL)
 
-	// Marshal request payload into JSON
+	// Marshal request
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -123,7 +121,7 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Build HTTP POST request with context
+	// Build HTTP request
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -136,8 +134,9 @@ func (nm *NodeManagement) ListChildNodes(
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
+	httpReq.Header.Set("Content-Type", "application/json")
 
-	// Execute HTTP request
+	// Execute request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -147,7 +146,7 @@ func (nm *NodeManagement) ListChildNodes(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// Decode response
 	var apiResp ListChildNodesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
@@ -156,16 +155,12 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// HTTP-level error
-	if resp.StatusCode != http.StatusOK {
+	fmt.Printf("%+v\n", apiResp)
+
+	// Centralized API error handling
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// API-level error
-	if !apiResp.Success {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// Success
 	return &apiResp, nil
 }

@@ -5,6 +5,37 @@ package errors
 import "errors"
 
 // ----------------------------------------------------
+// General errors
+// ----------------------------------------------------
+
+var (
+	// ErrNodeDeviceIDExists is returned when a device ID
+	// already exists for a node.
+	ErrNodeDeviceIDExists = errors.New("node device id already exists")
+
+	// ErrNodeManagementNotInitialized is returned when
+	// the NodeManagement client is nil.
+	ErrNodeManagementNotInitialized = errors.New("client not initialized")
+
+	// ErrNodeNotFound is returned when node details
+	// are not found.
+	ErrNodeNotFound = errors.New("node not found")
+
+	// ErrNodeInvalidUUID is returned when node ID
+	// is not a valid UUID.
+	ErrNodeInvalidUUID = errors.New("node invalid uuid")
+)
+
+// ----------------------------------------------------
+// Authentication & Authorization errors
+// ----------------------------------------------------
+
+var (
+	ErrAccessDenied  = errors.New("access denied")
+	ErrTokenNotFound = errors.New("authorization token not found")
+)
+
+// ----------------------------------------------------
 // GetNodeList validation errors
 // ----------------------------------------------------
 
@@ -27,8 +58,8 @@ var (
 // ----------------------------------------------------
 
 var (
-	// ErrNodeDetailsRequestNil is returned when the nodes
-	// list is missing or empty.
+	// ErrNodeDetailsRequestNil is returned when the
+	// GetNodeDetails request is nil.
 	ErrNodeDetailsRequestNil = errors.New("request is nil")
 )
 
@@ -52,6 +83,11 @@ var (
 	// ErrAddChildNodeInvalidChild is returned when a child node
 	// entry is missing nodeId or alias.
 	ErrAddChildNodeInvalidChild = errors.New("invalid child")
+
+	// Hierarchy constraint violations
+	ErrNodeChildExists          = errors.New("child node already exists")
+	ErrNodeUniqueAliasViolation = errors.New("duplicate alias not allowed for the same parent node")
+	ErrNodeUniqueChildViolation = errors.New("duplicate child nodes not allowed for the same parent node")
 )
 
 // ----------------------------------------------------
@@ -70,6 +106,10 @@ var (
 	// ErrRemoveChildNodeChildIDRequired is returned when
 	// childNode is missing.
 	ErrRemoveChildNodeChildIDRequired = errors.New("child id required")
+
+	ErrNodeChildNotFound   = errors.New("no such child node associated with the parent node")
+	ErrNodeInvalidParentID = errors.New("invalid parent node ID")
+	ErrNodeInvalidChildID  = errors.New("invalid child node ID")
 )
 
 // ----------------------------------------------------
@@ -110,7 +150,7 @@ var (
 	ErrGetConnectionKeyRequestNil = errors.New("request is nil")
 
 	// ErrGetConnectionKeyNodeIDRequired is returned when
-	// nodeid is missing.
+	// nodeId is missing.
 	ErrGetConnectionKeyNodeIDRequired = errors.New("node id required")
 )
 
@@ -124,7 +164,7 @@ var (
 	ErrUpdateNodeRequestNil = errors.New("request is nil")
 
 	// ErrUpdateNodeIDRequired is returned when
-	// nodeid is missing.
+	// nodeId is missing.
 	ErrUpdateNodeIDRequired = errors.New("node id required")
 
 	// ErrUpdateNodeEmptyUpdates is returned when
@@ -142,12 +182,14 @@ var (
 	ErrAuthorizeDeviceRequestNil = errors.New("request is nil")
 
 	// ErrAuthorizeDeviceNodeIDRequired is returned when
-	// nodeid is missing.
+	// nodeId is missing.
 	ErrAuthorizeDeviceNodeIDRequired = errors.New("node id required")
 
 	// ErrAuthorizeDeviceDeviceIDRequired is returned when
-	// deviceid is missing.
+	// deviceId is missing.
 	ErrAuthorizeDeviceDeviceIDRequired = errors.New("device id required")
+
+	ErrNodeDeviceNotFound = errors.New("node device not found")
 )
 
 // ----------------------------------------------------
@@ -160,16 +202,6 @@ var (
 	ErrDeleteNodeRequestNil = errors.New("request is nil")
 
 	// ErrDeleteNodeIDRequired is returned when
-	// nodeid is missing.
+	// nodeId is missing.
 	ErrDeleteNodeIDRequired = errors.New("node id required")
 )
-
-// ----------------------------------------------------
-// Node Management general errors
-// ----------------------------------------------------
-
-// ErrNodeManagementNotInitialized is returned when NodeManagement client is nil
-var ErrNodeManagementNotInitialized = errors.New("client not initialized")
-
-// ErrNodeNotFound is returned when node details are not found
-var ErrNodeNotFound = errors.New("node not found")

@@ -86,12 +86,7 @@ func (nm *NodeManagement) GetConnectionKey(
 	}
 
 	// Build HTTP POST request with context
-	httpReq, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		url,
-		bytes.NewBuffer(body),
-	)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return "", &errors.AnedyaError{
 			Message: "failed to build GetConnectionKey request",
@@ -118,16 +113,11 @@ func (nm *NodeManagement) GetConnectionKey(
 		}
 	}
 
-	// HTTP-level error
-	if resp.StatusCode != http.StatusOK {
+	// Handle HTTP or API-level errors
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return "", errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// API-level error
-	if !apiResp.Success {
-		return "", errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// Success
+	// Success: return the connection key
 	return apiResp.ConnectionKey, nil
 }
