@@ -54,7 +54,10 @@ func (v *VariableManagement) DeleteVariable(ctx context.Context, variable string
 
 	// 1. Validate input
 	if variable == "" {
-		return errors.ErrVariableRequired
+		return &errors.AnedyaError{
+			Message: "Input variable is required",
+			Err:     errors.ErrVariableRequired,
+		}
 	}
 
 	// 2. Prepare request payload
