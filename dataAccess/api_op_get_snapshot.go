@@ -1,3 +1,5 @@
+// Package dataAccess provides APIs to retrieve time-series,
+// latest, and snapshot data for nodes within the Anedya platform.
 package dataAccess
 
 import (
@@ -10,32 +12,77 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// Request body for snapshot data
+// GetSnapshotRequest represents the payload used to fetch
+// snapshot data for a variable at a specific timestamp
+// across one or more nodes.
 type GetSnapshotRequest struct {
-	Timestamp int64    `json:"timestamp"` // time in unix ms
-	Variable  string   `json:"variable"`  // variable name
-	Nodes     []string `json:"nodes"`     // node IDs
+	// Timestamp specifies the snapshot time in Unix milliseconds.
+	Timestamp int64 `json:"timestamp"`
+
+	// Variable is the name of the variable whose snapshot is requested.
+	Variable string `json:"variable"`
+
+	// Nodes is the list of node IDs for which snapshot data is requested.
+	Nodes []string `json:"nodes"`
 }
 
-// Single snapshot value
+// SnapshotDataPoint represents the value of a variable
+// at a specific timestamp for a node.
 type SnapshotDataPoint struct {
-	Timestamp int64       `json:"timestamp"`
-	Value     interface{} `json:"value"`
+	// Timestamp indicates the snapshot time (Unix milliseconds).
+	Timestamp int64 `json:"timestamp"`
+
+	// Value holds the snapshot value of the variable.
+	Value interface{} `json:"value"`
 }
 
-// API response structure
+// GetSnapshotResponse represents the response returned by
+// the Get Snapshot API.
 type GetSnapshotResponse struct {
-	Success    bool                         `json:"success"`
-	Error      string                       `json:"error"`
-	ReasonCode string                       `json:"reasonCode,omitempty"`
-	Data       map[string]SnapshotDataPoint `json:"data"` // nodeID -> snapshot
-	Count      int                          `json:"count"`
+	// Success indicates whether the snapshot retrieval was successful.
+	Success bool `json:"success"`
+
+	// Error contains a human-readable error message when Success is false.
+	Error string `json:"error"`
+
+	// ReasonCode is the machine-readable error code
+	// used for SDK error mapping.
+	ReasonCode string `json:"reasonCode,omitempty"`
+
+	// Data maps node IDs to their corresponding snapshot data points.
+	Data map[string]SnapshotDataPoint `json:"data"`
+
+	// Count represents the number of nodes for which snapshot data was returned.
+	Count int `json:"count"`
 }
 
-// Fetches snapshot data for a variable at a given timestamp
-func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotRequest) (*GetSnapshotResponse, error) {
+// API
+// ========================
 
-	// Validate request
+// GetSnapshot retrieves snapshot data for a variable at a given timestamp
+// across one or more nodes from the Anedya platform.
+//
+// Steps performed by this method:
+//  1. Validate the request payload and mandatory fields.
+//  2. Marshal the request into JSON format.
+//  3. Build and send a POST request to the Get Snapshot API.
+//  4. Decode the API response into GetSnapshotResponse.
+//  5. Map API-level errors into structured SDK errors.
+//
+// Parameters:
+//   - ctx: Context used to control request lifecycle, cancellation, and deadlines.
+//   - req: Pointer to GetSnapshotRequest containing snapshot query parameters.
+//
+// Returns:
+//   - (*GetSnapshotResponse, nil) if the snapshot data is fetched successfully.
+//   - (nil, error) for validation or client-side failures.
+//   - (*GetSnapshotResponse, error) when the API responds with an error.
+func (dm *DataManagement) GetSnapshot(
+	ctx context.Context,
+	req *GetSnapshotRequest,
+) (*GetSnapshotResponse, error) {
+
+	// check if request is nil
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get snapshot request cannot be nil",
@@ -43,6 +90,7 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
+	// variable name must be provided
 	if req.Variable == "" {
 		return nil, &errors.AnedyaError{
 			Message: "variable is required",
@@ -50,6 +98,7 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
+	// timestamp must be valid
 	if req.Timestamp <= 0 {
 		return nil, &errors.AnedyaError{
 			Message: "timestamp must be greater than 0",
@@ -57,6 +106,7 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
+	// at least one node must be provided
 	if len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "at least one node must be provided",
@@ -64,6 +114,7 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
+	// validate each node ID
 	for i, node := range req.Nodes {
 		if node == "" {
 			return nil, &errors.AnedyaError{
@@ -73,10 +124,10 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
-	// Build API URL
+	// build API URL
 	url := fmt.Sprintf("%s/v1/data/snapshot", dm.baseURL)
 
-	// Convert request to JSON
+	// convert request to JSON
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -85,8 +136,13 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
-	// Create HTTP request
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	// create HTTP request with context
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		url,
+		bytes.NewBuffer(body),
+	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to build GetSnapshot request",
@@ -94,7 +150,7 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
-	// Send request
+	// send HTTP request
 	resp, err := dm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -104,7 +160,7 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 	}
 	defer resp.Body.Close()
 
-	// Read response
+	// decode API response
 	var apiResp GetSnapshotResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
@@ -113,10 +169,11 @@ func (dm *DataManagement) GetSnapshot(ctx context.Context, req *GetSnapshotReque
 		}
 	}
 
-	// Handle API error
+	// handle HTTP or API-level errors
 	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return &apiResp, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// success
 	return &apiResp, nil
 }
