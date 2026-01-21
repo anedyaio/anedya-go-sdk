@@ -14,23 +14,13 @@ import (
 )
 
 // GetLatestDataRequest represents the payload used to fetch
-// the most recent data value for a variable across multiple nodes.
+// the most recent data value for a variable across one or more nodes.
 type GetLatestDataRequest struct {
 	// Nodes is the list of node IDs for which the latest data is requested.
 	Nodes []string `json:"nodes"`
 
 	// Variable is the name of the variable whose latest value is requested.
 	Variable string `json:"variable"`
-}
-
-// LatestDataPoint represents the latest recorded value
-// of a variable for a node.
-type LatestDataPoint struct {
-	// Timestamp indicates when the value was last recorded (Unix milliseconds).
-	Timestamp int64 `json:"timestamp"`
-
-	// Value holds the most recent value of the variable.
-	Value interface{} `json:"value"`
 }
 
 // GetLatestDataResponse represents the response returned by
@@ -47,7 +37,7 @@ type GetLatestDataResponse struct {
 	ReasonCode string `json:"reasonCode,omitempty"`
 
 	// Data maps node IDs to their corresponding latest data points.
-	Data map[string]LatestDataPoint `json:"data"`
+	Data map[string]DataPoint `json:"data"`
 
 	// Count represents the number of nodes for which data was returned.
 	Count int `json:"count"`

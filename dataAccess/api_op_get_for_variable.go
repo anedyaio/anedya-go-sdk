@@ -1,6 +1,5 @@
 // Package dataAccess provides APIs to retrieve and manage
-// time-series data associated with nodes and variables
-// within the Anedya platform.
+// time-series data for nodes within the Anedya platform.
 package dataAccess
 
 import (
@@ -15,9 +14,6 @@ import (
 
 // GetDataRequest represents the payload used to fetch
 // time-series data for a variable across one or more nodes.
-//
-// It supports filtering by time range, result limiting,
-// and ordering of data points.
 type GetDataRequest struct {
 	// Variable is the name of the variable whose data is requested.
 	Variable string `json:"variable"`
@@ -25,13 +21,13 @@ type GetDataRequest struct {
 	// Nodes is the list of node IDs for which data should be retrieved.
 	Nodes []string `json:"nodes"`
 
-	// From is the start timestamp (Unix milliseconds).
+	// From is the start timestamp of the query range (Unix milliseconds).
 	From int64 `json:"from"`
 
-	// To is the end timestamp (Unix milliseconds).
+	// To is the end timestamp of the query range (Unix milliseconds).
 	To int64 `json:"to"`
 
-	// Limit specifies the maximum number of data points to return.
+	// Limit restricts the maximum number of data points returned.
 	// If omitted, the server applies a default limit.
 	Limit int `json:"limit,omitempty"`
 
@@ -40,20 +36,10 @@ type GetDataRequest struct {
 	Order string `json:"order,omitempty"`
 }
 
-// DataPoint represents a single data point for a variable
-// recorded at a specific timestamp.
-type DataPoint struct {
-	// Timestamp indicates when the value was recorded (Unix milliseconds).
-	Timestamp int64 `json:"timestamp"`
-
-	// Value holds the recorded value for the variable.
-	Value interface{} `json:"value"`
-}
-
 // GetDataResponse represents the response returned by
 // the Get Data API.
 type GetDataResponse struct {
-	// Success indicates whether the data retrieval was successful.
+	// Success indicates whether the request was processed successfully.
 	Success bool `json:"success"`
 
 	// Error contains a human-readable error message when Success is false.
@@ -69,7 +55,7 @@ type GetDataResponse struct {
 	// Count represents the total number of data points returned.
 	Count int `json:"count"`
 
-	// Data maps node IDs to their corresponding list of data points.
+	// Data maps node IDs to their corresponding data points.
 	Data map[string][]DataPoint `json:"data"`
 }
 
@@ -89,7 +75,7 @@ type GetDataResponse struct {
 //
 // Returns:
 //   - (*GetDataResponse, nil) if the data is fetched successfully.
-//   - (nil, error) for client-side or validation failures.
+//   - (nil, error) for validation or client-side failures.
 //   - (*GetDataResponse, error) when the API responds with an error.
 func (dm *DataManagement) GetData(
 	ctx context.Context,
@@ -120,7 +106,7 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// validate time range
+	// validate timestamp range
 	if req.From <= 0 || req.To <= 0 || req.From > req.To {
 		return nil, &errors.AnedyaError{
 			Message: "invalid from/to timestamp range",

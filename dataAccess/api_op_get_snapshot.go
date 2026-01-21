@@ -1,5 +1,5 @@
-// Package dataAccess provides APIs to retrieve time-series,
-// latest, and snapshot data for nodes within the Anedya platform.
+// Package dataAccess provides APIs to retrieve and manage
+// node-level data from the Anedya platform.
 package dataAccess
 
 import (
@@ -13,61 +13,50 @@ import (
 )
 
 // GetSnapshotRequest represents the payload used to fetch
-// snapshot data for a variable at a specific timestamp
-// across one or more nodes.
+// a snapshot of a variable's value for one or more nodes
+// at a specific point in time.
 type GetSnapshotRequest struct {
-	// Timestamp specifies the snapshot time in Unix milliseconds.
+	// Timestamp represents the point in time (Unix epoch in milliseconds)
+	// for which the snapshot data is requested.
 	Timestamp int64 `json:"timestamp"`
 
 	// Variable is the name of the variable whose snapshot is requested.
 	Variable string `json:"variable"`
 
-	// Nodes is the list of node IDs for which snapshot data is requested.
+	// Nodes is the list of node IDs for which snapshot data is required.
 	Nodes []string `json:"nodes"`
-}
-
-// SnapshotDataPoint represents the value of a variable
-// at a specific timestamp for a node.
-type SnapshotDataPoint struct {
-	// Timestamp indicates the snapshot time (Unix milliseconds).
-	Timestamp int64 `json:"timestamp"`
-
-	// Value holds the snapshot value of the variable.
-	Value interface{} `json:"value"`
 }
 
 // GetSnapshotResponse represents the response returned by
 // the Get Snapshot API.
 type GetSnapshotResponse struct {
-	// Success indicates whether the snapshot retrieval was successful.
+	// Success indicates whether the request was processed successfully.
 	Success bool `json:"success"`
 
 	// Error contains a human-readable error message when Success is false.
 	Error string `json:"error"`
 
-	// ReasonCode is the machine-readable error code
-	// used for SDK error mapping.
+	// ReasonCode is a machine-readable error code
+	// used by the SDK to map API errors.
 	ReasonCode string `json:"reasonCode,omitempty"`
 
-	// Data maps node IDs to their corresponding snapshot data points.
-	Data map[string]SnapshotDataPoint `json:"data"`
+	// Data maps node IDs to their corresponding data points
+	// at the requested timestamp.
+	Data map[string]DataPoint `json:"data"`
 
-	// Count represents the number of nodes for which snapshot data was returned.
+	// Count represents the number of nodes for which data was returned.
 	Count int `json:"count"`
 }
 
-// API
-// ========================
-
-// GetSnapshot retrieves snapshot data for a variable at a given timestamp
-// across one or more nodes from the Anedya platform.
+// GetSnapshot retrieves a snapshot of a variable's data
+// for one or more nodes at a specific timestamp.
 //
 // Steps performed by this method:
 //  1. Validate the request payload and mandatory fields.
 //  2. Marshal the request into JSON format.
-//  3. Build and send a POST request to the Get Snapshot API.
+//  3. Build and send a POST request to the Snapshot API.
 //  4. Decode the API response into GetSnapshotResponse.
-//  5. Map API-level errors into structured SDK errors.
+//  5. Convert API-level errors into structured SDK errors.
 //
 // Parameters:
 //   - ctx: Context used to control request lifecycle, cancellation, and deadlines.
