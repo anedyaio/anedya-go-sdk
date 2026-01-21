@@ -1,3 +1,5 @@
+// Package accesstokens provides APIs to manage access tokens
+// in the Anedya platform.
 package accesstokens
 
 import (
@@ -11,22 +13,57 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
+// Token represents an access token returned by the Anedya API.
+//
+// A Token allows authenticated access to platform resources
+// based on the attached access policy.
 type Token struct {
+
+	// tokenManagement holds the internal client used to
+	// perform operations related to this token.
+	//
+	// This field is not serialized and is used internally
+	// by the SDK.
 	tokenManagement *AccessTokenManagement
 
-	Policy  Policy `json:"policy"`
-	TTLSec  int    `json:"ttlSec"`
+	// Policy defines the access rules associated with the token,
+	// including allowed resources and permissions.
+	Policy Policy `json:"policy"`
+
+	// TTLSec specifies the time-to-live of the token in seconds.
+	//
+	// After this duration, the token expires and can no longer
+	// be used for authentication.
+	TTLSec int `json:"ttlSec"`
+
+	// TokenID is the unique identifier assigned by the API
+	// to the access token.
 	TokenID string `json:"tokenId"`
-	Token   string `json:"token"`
+
+	// Token is the actual secret value used for authentication
+	// in API requests.
+	Token string `json:"token"`
 }
 
-// AccessTokenManagement is the client for access-token APIs.
+// AccessTokenManagement provides methods to create, revoke,
+// and manage access tokens using the Anedya API.
+//
+// It wraps an HTTP client and a base URL used to construct requests.
 type AccessTokenManagement struct {
+
+	// httpClient is the underlying HTTP client used to
+	// perform API requests.
 	httpClient *http.Client
-	baseURL    string
+
+	// baseURL is the root API endpoint used for all
+	// access token management requests.
+	baseURL string
 }
 
-// NewAccessTokenManagement creates a new access-token management client.
+// NewAccessTokenManagement creates a new AccessTokenManagement client.
+//
+// The provided http.Client is used for all network communication,
+// and baseURL specifies the API server address.
 func NewAccessTokenManagement(c *http.Client, baseURL string) *AccessTokenManagement {
 	return &AccessTokenManagement{
 		httpClient: c,
@@ -34,34 +71,73 @@ func NewAccessTokenManagement(c *http.Client, baseURL string) *AccessTokenManage
 	}
 }
 
-// Policy represents the acess policy for the token
+// Policy represents the access policy attached to an access token.
+//
+// It defines which resources can be accessed and what actions
+// are allowed on those resources.
 type Policy struct {
+
+	// Resources specifies the set of resources that the token
+	// can access.
+	//
+	// The structure of this object depends on the Anedya Access
+	// Policy specification (for example: nodes, devices, etc.).
 	Resources map[string]interface{} `json:"resources,omitempty"`
-	Allow     []Permission           `json:"allow,omitempty"`
+
+	// Allow lists the permissions granted to the token.
+	//
+	// Each permission must be a valid Permission constant
+	// defined by the SDK.
+	Allow []Permission `json:"allow,omitempty"`
 }
 
-// CreateNewAccessTokenRequest represents the request from CreateNewAccessToken API
-
+// CreateNewAccessTokenRequest represents the payload sent to the
+// Create Access Token API endpoint.
+//
+// All required fields must be provided before calling CreateNewAccessToken.
 type CreateNewAccessTokenRequest struct {
-	TTLSec int    `json:"ttlSec"` // Required  1 <= expiry <=7776000
-	Policy Policy `json:"policy"` // Required
+
+	// TTLSec specifies the token expiration time in seconds.
+	//
+	// Valid range:
+	//   1 <= TTLSec <= 7776000 (3 months)
+	TTLSec int `json:"ttlSec"`
+
+	// Policy specifies the access policy that controls
+	// what the token is allowed to do.
+	Policy Policy `json:"policy"`
 }
 
-// BaseResponse contains common fields returned by the API.
+// BaseResponse represents common fields returned by all
+// Anedya API responses.
 type BaseResponse struct {
-	Success    bool   `json:"success"`
-	Error      string `json:"error"`
+
+	// Success indicates whether the API request was successful.
+	Success bool `json:"success"`
+
+	// Error contains the error message returned by the API
+	// when Success is false.
+	Error string `json:"error"`
+
+	// ReasonCode contains the machine-readable error code
+	// used for SDK error mapping.
 	ReasonCode string `json:"reasonCode"`
 }
 
-// CreateNewAccessTokenResponse represents the response from CreateNewAccessToken API
+// CreateNewAccessTokenResponse represents the response returned by
+// the Create Access Token API endpoint.
 type CreateNewAccessTokenResponse struct {
 	BaseResponse
+
+	// TokenID is the identifier of the newly created token.
 	TokenID string `json:"tokenId"`
-	Token   string `json:"token"`
+
+	// Token is the generated secret token value.
+	Token string `json:"token"`
 }
 
-// Permission represents an access permission allowed in a token policy
+// Permission represents a single access permission
+// that can be granted to an access token.
 type Permission string
 
 const (
@@ -90,6 +166,8 @@ const (
 	PermissionHealthGetStatus  Permission = "health::getstatus"
 )
 
+// isValidPermission validates whether the given permission
+// is supported by the SDK.
 func isValidPermission(p Permission) bool {
 	switch p {
 	case
@@ -114,9 +192,28 @@ func isValidPermission(p Permission) bool {
 
 }
 
-// CreateNewAccessToken creates a new access token.
+// CreateNewAccessToken creates a new access token in the Anedya platform.
+//
+// Input:
+//   - ctx: request context
+//   - input: CreateNewAccessTokenRequest containing TTL and policy
+//
+// Output:
+//   - *Token on success
+//   - error on failure
+//
+// The method performs the following steps:
+//
+//  1. Validates the input payload.
+//  2. Encodes the payload as JSON.
+//  3. Builds and sends an HTTP request.
+//  4. Reads and decodes the API response.
+//  5. Maps API errors into structured SDK errors.
+//
+// Validation errors are returned as sentinel errors defined in the
+// errors package. All other failures return *errors.AnedyaError.
 func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input *CreateNewAccessTokenRequest) (*Token, error) {
-	// 1. Validate inputs
+	// Validate the input request
 	if input == nil {
 		return nil, &errors.AnedyaError{
 			Message: "Input is required",
@@ -124,18 +221,21 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 		}
 	}
 
+	// Define valid bounds for token expiry (in seconds).
 	const (
 		expiryMaxValue int = 7776000 // Maximum expiry in seconds (3 months)
 		expiryMinValue int = 1       // Minimum expiry in seconds
 	)
-	// Validate expiry range
+
+	// Validate that the provided TTL is within the allowed range.
 	if input.TTLSec < expiryMinValue || input.TTLSec > expiryMaxValue {
 		return nil, &errors.AnedyaError{
 			Message: fmt.Sprintf("ttlSec must be between %d and %d seconds", expiryMinValue, expiryMaxValue),
 			Err:     errors.ErrExpiryRequried,
 		}
 	}
-	// Validate policy
+
+	// Ensure that at least one permission is defined in the policy.
 	if len(input.Policy.Allow) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "must contain at least one permission",
@@ -143,6 +243,7 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 		}
 	}
 
+	// Validate that all provided permissions are supported by the SDK.
 	for _, p := range input.Policy.Allow {
 		if !isValidPermission(p) {
 			return nil, &errors.AnedyaError{
@@ -151,7 +252,8 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 			}
 		}
 	}
-	// 2. Prepare payload
+
+	// Encode the request payload
 	requestBody, err := json.Marshal(input)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -160,8 +262,7 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 		}
 	}
 
-	// 3. Create HTTP Request
-	// assuming baseUrl to be "https://api.ap-in-1.anedya.io"
+	// Construct the HTTP request for the API endpoint.
 	url := fmt.Sprintf("%s/v1/access/tokens/create", t.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(requestBody))
 	if err != nil {
@@ -174,7 +275,7 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	// 4. Execute Request
+	// Send the HTTP request to the API server
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -184,7 +285,7 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 	}
 	defer resp.Body.Close()
 
-	// 5. Read response data
+	// Read the raw response body from the API.
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -193,7 +294,7 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 		}
 	}
 
-	// 7. Decode response
+	// Decode the JSON response into the response structure.
 	var apiResp CreateNewAccessTokenResponse
 	err = json.Unmarshal(responseBody, &apiResp)
 	if err != nil {
@@ -203,15 +304,17 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 		}
 	}
 
-	// 6. Check for status codes
+	// Handle HTTP-level errors.
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// Handle API-level errors.
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// Construct and return the SDK Token object.
 	return &Token{
 		tokenManagement: t,
 		TokenID:         apiResp.TokenID,

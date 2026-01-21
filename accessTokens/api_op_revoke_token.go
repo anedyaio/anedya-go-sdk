@@ -1,3 +1,5 @@
+// Package accesstokens provides APIs to manage access tokens
+// in the Anedya platform.
 package accesstokens
 
 import (
@@ -11,19 +13,49 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// RevokeAcessTokenRequest represents the request from RevokeAcsessToken API
+// RevokeAccessTokenRequest represents the payload sent to the
+// Revoke Access Token API endpoint.
+//
+// It identifies the token to be revoked using its unique token ID.
 type RevokeAccessTokenRequest struct {
+
+	// TokenID is the unique identifier of the access token
+	// that should be revoked.
+	//
+	// This field is required.
 	TokenID string `json:"tokenId"`
 }
 
-// RevokeAccessTokenResponse represents the response from RevokeAccessToken API
+// RevokeAccessTokenResponse represents the response returned by
+// the Revoke Access Token API endpoint.
+//
+// It embeds BaseResponse, which contains the standard API
+// success flag, error message, and reason code.
 type RevokeAccessTokenResponse struct {
 	BaseResponse
 }
 
-// RevokeAccessToken revokes any issued token by providing tokenID
+// RevokeAccessToken revokes an existing access token in the Anedya platform.
+//
+// Input:
+//   - ctx: request context
+//   - input: RevokeAccessTokenRequest containing TokenID
+//
+// Output:
+//   - error on failure
+//
+// The method performs the following steps:
+//
+//  1. Validates the input token identifier.
+//  2. Encodes the request payload as JSON.
+//  3. Builds and sends an HTTP request.
+//  4. Reads and decodes the API response.
+//  5. Maps API errors into structured SDK errors.
+//
+// Validation errors are returned as sentinel errors defined in the
+// errors package. All other failures return *errors.AnedyaError.
 func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId string) error {
-	// 1. Validate Inputs
+	// Step 1: Validate the input token identifier.
 	if tokenId == "" {
 		return &errors.AnedyaError{
 			Message: "tokenId is required",
@@ -31,7 +63,7 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 		}
 	}
 
-	// 2. Prepare payload
+	// Step 2: Construct the request payload.
 	reqPayload := RevokeAccessTokenRequest{
 		TokenID: tokenId,
 	}
@@ -43,8 +75,7 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 		}
 	}
 
-	// 3. Create HTTP request
-	// assuming baseUrl to be "https://api.ap-in-1.anedya.io"
+	// Step 3: Build the HTTP request.
 	url := fmt.Sprintf("%s/v1/access/tokens/revoke", t.baseURL)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(requestBody))
 	if err != nil {
@@ -57,7 +88,7 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 
-	// 4. Execute Request
+	// Step 4: Execute the HTTP request.
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
 		return &errors.AnedyaError{
@@ -67,7 +98,7 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 	}
 	defer resp.Body.Close()
 
-	// 5. Read response data
+	// Step 5: Read the response body.
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return &errors.AnedyaError{
@@ -76,7 +107,7 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 		}
 	}
 
-	// 7. Decode response
+	// Step 6: Decode the API response.
 	var apiResp RevokeAccessTokenResponse
 
 	err = json.Unmarshal(responseBody, &apiResp)
@@ -87,14 +118,16 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 		}
 	}
 
-	// 6. Check for status codes
+	// Step 7: Handle HTTP-level errors.
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// Step 8: Handle API-level errors.
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// Step 9: Token successfully revoked.
 	return nil
 }
