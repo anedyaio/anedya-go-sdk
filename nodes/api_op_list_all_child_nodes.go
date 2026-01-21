@@ -134,9 +134,8 @@ func (nm *NodeManagement) ListChildNodes(
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
-	httpReq.Header.Set("Content-Type", "application/json")
 
-	// Execute request
+	// Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{

@@ -91,8 +91,8 @@ func (nm *NodeManagement) RemoveChildNode(ctx context.Context, req *RemoveChildN
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
-	httpReq.Header.Set("Content-Type", "application/json")
 
+	// Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return &errors.AnedyaError{
