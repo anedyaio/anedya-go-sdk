@@ -10,6 +10,8 @@ import "errors"
 
 // Generic SDK errors used by ALL APIs.
 var (
+	// ErrInvalidInput indicates the input provided is invalid.
+	ErrInvalidInput = errors.New("input is invalid")
 
 	// ErrInputRequired indicates that a required request input was not provided.
 	ErrInputRequired = errors.New("input is required")

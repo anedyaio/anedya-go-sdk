@@ -30,6 +30,9 @@ func (e *AnedyaError) Unwrap() error {
 
 // codeMap maps API reason codes to SDK sentinel errors.
 var codeMap = map[string]error{
+	// generic errors
+	"generic::malformedrequest": ErrInvalidInput,
+
 	// node errors
 	"node::devidexists":          ErrNodeDeviceIDExists,
 	"node::childexists":          ErrNodeChildExists,
@@ -46,19 +49,17 @@ var codeMap = map[string]error{
 	"data::variablenotfound": ErrVariableNotFound,
 	"data::invalidnodeid":    ErrInvalidNodeID,
 
+	// variable errors
 	"variable::namerequired":     ErrVariableNameRequired,
 	"variable::variablerequired": ErrVariableRequired,
 	"variable::typerequired":     ErrVariableTypeRequired,
-
-	//auth
-	"auth::accessdenied":  ErrAccessDenied,
-	"auth::tokennotfound": ErrTokenNotFound,
 }
 
 // GetError converts an API reason code and message into an AnedyaError.
 func GetError(code, message string) error {
 	sentinel, ok := codeMap[code]
 	if !ok {
+		message = fmt.Sprintf("%s (Hidden Code: %s)", message, code)
 		sentinel = ErrUnknown
 	}
 
