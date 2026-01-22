@@ -42,6 +42,10 @@ var codeMap = map[string]error{
 	"node::devicenotfound":       ErrNodeDeviceNotFound,
 	"node::invaliduuid":          ErrNodeInvalidUUID,
 
+	// Data API errors
+	"data::variablenotfound": ErrVariableNotFound,
+	"data::invalidnodeid":    ErrInvalidNodeID,
+
 	"variable::namerequired":     ErrVariableNameRequired,
 	"variable::variablerequired": ErrVariableRequired,
 	"variable::typerequired":     ErrVariableTypeRequired,
