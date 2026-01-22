@@ -53,13 +53,16 @@ var codeMap = map[string]error{
 	"variable::namerequired":     ErrVariableNameRequired,
 	"variable::variablerequired": ErrVariableRequired,
 	"variable::typerequired":     ErrVariableTypeRequired,
+
+	// accesstoken errors
+	"fa::invalidexpiry": ErrExpiryRequried,
+	"fa::tokennofound":  ErrInvalidToken,
 }
 
 // GetError converts an API reason code and message into an AnedyaError.
 func GetError(code, message string) error {
 	sentinel, ok := codeMap[code]
 	if !ok {
-		message = fmt.Sprintf("%s (Hidden Code: %s)", message, code)
 		sentinel = ErrUnknown
 	}
 

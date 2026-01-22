@@ -18,4 +18,7 @@ var (
 	// ErrTokenIdRequired indicates that the tokenId field
 	// is missing or empty when it is required by the API.
 	ErrTokenIdRequired = errors.New("TokenID value is required")
+
+	// ErrInvalidToken indicates that the input tokenId is invalid
+	ErrInvalidToken = errors.New("TokenId is invalid")
 )
