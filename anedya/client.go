@@ -1,4 +1,4 @@
-package client
+package anedya
 
 import (
 	"net/http"
@@ -10,14 +10,20 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/variable"
 )
 
+type AnedyaRegion string
+
+const (
+	AP_IN_1 AnedyaRegion = "ap-in-1"
+)
+
 type Client struct {
 	NodeManagement        *nodes.NodeManagement
 	VariableManagement    *variable.VariableManagement
-	DataManagement       *dataAccess.DataManagement
+	DataManagement        *dataAccess.DataManagement
 	AccessTokenManagement *accesstokens.AccessTokenManagement
 }
 
-func NewClient(apiKey, baseURL string) *Client {
+func NewClient(baseURL, apiKey string) *Client {
 
 	auth := &authTransport{
 		apiKey: apiKey,
@@ -32,7 +38,11 @@ func NewClient(apiKey, baseURL string) *Client {
 	return &Client{
 		NodeManagement:        nodes.NewNodeManagement(hc, baseURL),
 		VariableManagement:    variable.NewVariableManagement(hc, baseURL),
-		DataManagement:       dataAccess.NewDataManagement(hc, baseURL),
+		DataManagement:        dataAccess.NewDataManagement(hc, baseURL),
 		AccessTokenManagement: accesstokens.NewAccessTokenManagement(hc, baseURL),
 	}
+}
+
+func DefaultURL(region AnedyaRegion) string {
+	return "https://api." + string(region) + ".anedya.io"
 }
