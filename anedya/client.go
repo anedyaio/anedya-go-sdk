@@ -8,6 +8,7 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/dataAccess"
 	"github.com/anedyaio/anedya-go-sdk/deviceLogs"
 	"github.com/anedyaio/anedya-go-sdk/nodes"
+	valuestore "github.com/anedyaio/anedya-go-sdk/valueStore"
 	"github.com/anedyaio/anedya-go-sdk/variable"
 )
 
@@ -23,6 +24,7 @@ type Client struct {
 	DataManagement        *dataAccess.DataManagement
 	AccessTokenManagement *accesstokens.AccessTokenManagement
 	DeviceLogManagement   *deviceLogs.DeviceLogManagement
+	ValueStoreManagement  *valuestore.ValueStoreManagement
 }
 
 func NewClient(baseURL, apiKey string) *Client {
@@ -43,6 +45,7 @@ func NewClient(baseURL, apiKey string) *Client {
 		DataManagement:        dataAccess.NewDataManagement(hc, baseURL),
 		AccessTokenManagement: accesstokens.NewAccessTokenManagement(hc, baseURL),
 		DeviceLogManagement:   deviceLogs.NewDeviceLogManagement(hc, baseURL),
+		ValueStoreManagement:  valuestore.NewValueStoreMangement(hc, baseURL),
 	}
 }
 
