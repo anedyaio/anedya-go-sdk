@@ -122,7 +122,7 @@ func (dm *DeviceLogManagement) GetLogs(ctx context.Context, req *GetLogsRequest)
 	if req.Limit < 0 || req.Limit > 1000 {
 		return nil, &errors.AnedyaError{
 			Message: "limit must be between 0 and 1000",
-			Err:     errors.ErrInvalidTimeRange,
+			Err:     errors.ErrInvalidInput,
 		}
 	}
 
