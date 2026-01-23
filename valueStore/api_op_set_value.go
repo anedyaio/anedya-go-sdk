@@ -49,7 +49,10 @@ type Value struct {
 // All required fields must be provided before calling SetValueRequest.
 type SetValueRequest struct {
 
-	// NameSpace defines the storage scope of the value.
+	// NameSpace specifies about the key-value pair that is stored.
+	//
+	// It defines the storage scope (global or node) and the
+	// associated identifier used to locate the value.
 	NameSpace NameSpace `json:"namespace"`
 
 	// Key is the unique identifier for the value.
@@ -64,6 +67,9 @@ type SetValueRequest struct {
 
 // SetValueRespone represents the API response for SetValue.
 type SetValueRespone struct {
+
+	// BaseResponse contains common API response fields such as
+	// success flag, error message, and machine-readable reason code.
 	common.BaseResponse
 }
 
