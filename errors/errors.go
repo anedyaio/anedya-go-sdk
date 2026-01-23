@@ -44,10 +44,15 @@ var codeMap = map[string]error{
 	"node::nodenotfound":         ErrNodeNotFound,
 	"node::devicenotfound":       ErrNodeDeviceNotFound,
 	"node::invaliduuid":          ErrNodeInvalidUUID,
+	"data::invalidorder":         ErrInvalidOrder,
 
 	// Data API errors
 	"data::variablenotfound": ErrVariableNotFound,
 	"data::invalidnodeid":    ErrInvalidNodeID,
+
+	// Device Logs API errors (verified from Postman)
+	"logs::invalidnodeid":    ErrInvalidNodeID,
+	"logs::invalidtimerange": ErrInvalidTimeRange,
 
 	// variable errors
 	"variable::namerequired":     ErrVariableNameRequired,
