@@ -1,5 +1,5 @@
 // Package dataAccess provides APIs to retrieve and manage
-// time-series and latest variable data for nodes
+// historical and latest time-series data for nodes
 // within the Anedya platform.
 package dataAccess
 
@@ -10,11 +10,16 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
+// ========================
+// REQUEST
+// ========================
+
 // GetLatestDataRequest represents the payload used to fetch
-// the most recent data value for a variable across one or more nodes.
+// the most recent data point of a variable for one or more nodes.
 type GetLatestDataRequest struct {
 	// Nodes is the list of node IDs for which the latest data is requested.
 	Nodes []string `json:"nodes"`
@@ -23,50 +28,64 @@ type GetLatestDataRequest struct {
 	Variable string `json:"variable"`
 }
 
-// GetLatestDataResponse represents the response returned by
-// the Get Latest Data API.
-type GetLatestDataResponse struct {
-	// Success indicates whether the request was processed successfully.
-	Success bool `json:"success"`
+// ========================
+// INTERNAL API RESPONSE
+// ========================
 
-	// Error contains a human-readable error message when Success is false.
-	Error string `json:"error"`
+// getLatestDataAPIResponse represents the raw response
+// returned by the Get Latest Data API.
+type getLatestDataAPIResponse struct {
+	common.BaseResponse
 
-	// ReasonCode is the machine-readable error code
-	// used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
-
-	// Data maps node IDs to their corresponding latest data points.
+	// Data maps node IDs to their latest data point.
 	Data map[string]DataPoint `json:"data"`
 
 	// Count represents the number of nodes for which data was returned.
 	Count int `json:"count"`
 }
 
-// GetLatestData retrieves the most recent data value for a variable
-// across one or more nodes from the Anedya platform.
+// ========================
+// RESULT
+// ========================
+
+// GetLatestDataResult represents the processed and user-facing
+// result returned by the GetLatestData method.
+type GetLatestDataResult struct {
+	// Data maps node IDs to their latest data point.
+	Data map[string]DataPoint
+
+	// Count represents the number of nodes for which data was returned.
+	Count int
+}
+
+// ========================
+// API
+// ========================
+
+// GetLatestData retrieves the most recent data point of a variable
+// for one or more nodes.
 //
 // Steps performed by this method:
-//  1. Validate the request payload and mandatory fields.
+//  1. Validate the request payload and required fields.
 //  2. Marshal the request into JSON format.
 //  3. Build and send a POST request to the Get Latest Data API.
-//  4. Decode the API response into GetLatestDataResponse.
-//  5. Map API-level errors into structured SDK errors.
+//  4. Decode the API response.
+//  5. Convert the API response into a user-friendly result.
 //
 // Parameters:
 //   - ctx: Context used to control request lifecycle, cancellation, and deadlines.
 //   - req: Pointer to GetLatestDataRequest containing query parameters.
 //
 // Returns:
-//   - (*GetLatestDataResponse, nil) if the data is fetched successfully.
+//   - (*GetLatestDataResult, nil) if the data is fetched successfully.
 //   - (nil, error) for validation or client-side failures.
-//   - (*GetLatestDataResponse, error) when the API responds with an error.
+//   - (nil, error) when the API responds with an error.
 func (dm *DataManagement) GetLatestData(
 	ctx context.Context,
 	req *GetLatestDataRequest,
-) (*GetLatestDataResponse, error) {
+) (*GetLatestDataResult, error) {
 
-	// check if request is nil
+	// validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get latest data request cannot be nil",
@@ -74,7 +93,7 @@ func (dm *DataManagement) GetLatestData(
 		}
 	}
 
-	// variable name must be provided
+	// variable name is mandatory
 	if req.Variable == "" {
 		return nil, &errors.AnedyaError{
 			Message: "variable is required",
@@ -90,7 +109,7 @@ func (dm *DataManagement) GetLatestData(
 		}
 	}
 
-	// validate each node ID
+	// validate node IDs
 	for i, node := range req.Nodes {
 		if node == "" {
 			return nil, &errors.AnedyaError{
@@ -103,7 +122,7 @@ func (dm *DataManagement) GetLatestData(
 	// build API URL
 	url := fmt.Sprintf("%s/v1/data/latest", dm.baseURL)
 
-	// convert request to JSON
+	// marshal request body
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -126,7 +145,7 @@ func (dm *DataManagement) GetLatestData(
 		}
 	}
 
-	// send HTTP request
+	// execute HTTP request
 	resp, err := dm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -137,7 +156,7 @@ func (dm *DataManagement) GetLatestData(
 	defer resp.Body.Close()
 
 	// decode API response
-	var apiResp GetLatestDataResponse
+	var apiResp getLatestDataAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetLatestData response",
@@ -145,11 +164,19 @@ func (dm *DataManagement) GetLatestData(
 		}
 	}
 
-	// handle HTTP or API-level errors
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
-		return &apiResp, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	// handle HTTP-level errors
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
-	return &apiResp, nil
+	// handle API-level errors
+	if !apiResp.Success {
+		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	}
+
+	// return processed result
+	return &GetLatestDataResult{
+		Data:  apiResp.Data,
+		Count: apiResp.Count,
+	}, nil
 }
