@@ -106,6 +106,14 @@ func (v *ValueStoreManagement) SetValue(ctx context.Context, input *SetValueRequ
 	}
 
 	// Validate scope
+	// Check if Namespace Scope is empty (Namespace is Required)
+	if input.NameSpace.Scope == "" {
+		return &errors.AnedyaError{
+			Message: "filter.namespace.scope is required",
+			Err:     errors.ErrNamespaceScopeRequired,
+		}
+	}
+
 	if !isValidScope(input.NameSpace.Scope) {
 		return &errors.AnedyaError{
 			Message: "invalid namespace scope",

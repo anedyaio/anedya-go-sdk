@@ -97,6 +97,8 @@ type GetValueResponse struct {
 //  6. Handles HTTP-level and API-level errors.
 //  7. Returns the parsed response on success.
 func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequest) (*GetValueResponse, error) {
+
+	// 1. Validate Input Struct
 	if input == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get value request cannot be nil",
@@ -104,6 +106,7 @@ func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequ
 		}
 	}
 
+	// 2. Encode Request
 	requestBody, err := json.Marshal(input)
 	if err != nil {
 		return nil, &errors.AnedyaError{
