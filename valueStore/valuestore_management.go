@@ -22,7 +22,7 @@ type ValueStoreManagement struct {
 //
 // The provided http.Client is used for all network communication,
 // and baseURL specifies the API server address.
-func NewValueStoreMangement(c *http.Client, baseURL string) *ValueStoreManagement {
+func NewValueStoreManagement(c *http.Client, baseURL string) *ValueStoreManagement {
 	return &ValueStoreManagement{
 		httpClient: c,
 		baseURL:    baseURL,

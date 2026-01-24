@@ -85,7 +85,7 @@ type ListValuesResponse struct {
 // Returns:
 //   - *ListValuesResponse: The list of found keys and pagination details on success.
 //   - error: An error if validation fails or the API call encounters an issue.
-func (v *ValueStoreManagement) ScanAllAvailableItem(ctx context.Context, input *ListValuesRequest) (*ListValuesResponse, error) {
+func (v *ValueStoreManagement) ScanAvailableItems(ctx context.Context, input *ListValuesRequest) (*ListValuesResponse, error) {
 
 	// 1. Validate Input Struct
 	if input == nil {
@@ -118,7 +118,7 @@ func (v *ValueStoreManagement) ScanAllAvailableItem(ctx context.Context, input *
 	}
 
 	// Check if orderby is valid
-	if !isValidOrderby(input.OrderBy) {
+	if !isValidOrderBy(input.OrderBy) {
 		return nil, &errors.AnedyaError{
 			Message: "Invalid order by",
 			Err:     errors.ErrInvalidOrderBy,

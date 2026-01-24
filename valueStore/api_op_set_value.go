@@ -40,7 +40,7 @@ type Value struct {
 	Value string `json:"value"`
 
 	// Type indicates the data type of the stored value.
-	Type string `json:"type"`
+	Type ValueType `json:"type"`
 }
 
 // SetValueRequest represents the payload sent to the
@@ -66,7 +66,7 @@ type SetValueRequest struct {
 }
 
 // SetValueRespone represents the API response for SetValue.
-type SetValueRespone struct {
+type SetValueResponse struct {
 
 	// BaseResponse contains common API response fields such as
 	// success flag, error message, and machine-readable reason code.
@@ -109,7 +109,7 @@ func (v *ValueStoreManagement) SetValue(ctx context.Context, input *SetValueRequ
 	// Check if Namespace Scope is empty (Namespace is Required)
 	if input.NameSpace.Scope == "" {
 		return &errors.AnedyaError{
-			Message: "filter.namespace.scope is required",
+			Message: "namespace scope is required",
 			Err:     errors.ErrNamespaceScopeRequired,
 		}
 	}
@@ -187,7 +187,7 @@ func (v *ValueStoreManagement) SetValue(ctx context.Context, input *SetValueRequ
 	}
 
 	// 6. Decode response
-	var apiResp SetValueRespone
+	var apiResp SetValueResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
 			Message: "failed to decode set value response",

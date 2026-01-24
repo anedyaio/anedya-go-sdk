@@ -1,5 +1,5 @@
-// Package dataAccess provides APIs to retrieve and manage
-// time-series data for nodes within the Anedya platform.
+// Package valuestore provides APIs to store and manage key-value data
+// in the Anedya platform.
 package valuestore
 
 import (
@@ -103,6 +103,30 @@ func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequ
 		return nil, &errors.AnedyaError{
 			Message: "get value request cannot be nil",
 			Err:     errors.ErrInputRequired,
+		}
+	}
+
+	// Validate scope
+	if !isValidScope(input.NameSpace.Scope) {
+		return nil, &errors.AnedyaError{
+			Message: "invalid namespace scope",
+			Err:     errors.ErrInvalidNamespaceScope,
+		}
+	}
+
+	// Validate Namespace Id
+	if input.NameSpace.Id == "" {
+		return nil, &errors.AnedyaError{
+			Message: "namespace id is required",
+			Err:     errors.ErrValueNamespaceIdRequired,
+		}
+	}
+
+	// Validate key
+	if input.Key == "" {
+		return nil, &errors.AnedyaError{
+			Message: "key is required",
+			Err:     errors.ErrValueKeyRequired,
 		}
 	}
 

@@ -83,6 +83,14 @@ func (v *ValueStoreManagement) DeleteKeyValuePair(ctx context.Context, input *De
 		}
 	}
 
+	// Validate key
+	if input.Key == "" {
+		return &errors.AnedyaError{
+			Message: "key is required",
+			Err:     errors.ErrValueKeyRequired,
+		}
+	}
+
 	// 2. Encode request body
 	requestBody, err := json.Marshal(input)
 	if err != nil {

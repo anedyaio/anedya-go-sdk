@@ -98,7 +98,7 @@ func isValidSortOrder(t SortOrder) bool {
 }
 
 // isValidOrderby validates whether the provided sort field is supported by the scan API.
-func isValidOrderby(t ScanOrderBy) bool {
+func isValidOrderBy(t ScanOrderBy) bool {
 	switch t {
 	case ScanOrderByNamespace, ScanOrderByKey, ScanOrderByCreated:
 		return true
