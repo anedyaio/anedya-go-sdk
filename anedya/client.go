@@ -45,7 +45,7 @@ func NewClient(baseURL, apiKey string) *Client {
 		DataManagement:        dataAccess.NewDataManagement(hc, baseURL),
 		AccessTokenManagement: accesstokens.NewAccessTokenManagement(hc, baseURL),
 		DeviceLogManagement:   deviceLogs.NewDeviceLogManagement(hc, baseURL),
-		ValueStoreManagement:  valuestore.NewValueStoreMangement(hc, baseURL),
+		ValueStoreManagement:  valuestore.NewValueStoreManagement(hc, baseURL),
 	}
 }
 

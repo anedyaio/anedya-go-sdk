@@ -29,4 +29,7 @@ var (
 
 	// ErrInvalidOrderBy indicates that the provided 'orderby' field is not one of the allowed values (namespace, key, created).
 	ErrInvalidOrderBy = errors.New("invalid orderby value")
+
+	// ErrValueRequired indicates that the value field is missing, which is mandatory for set value.
+	ErrValueRequired = errors.New("Value is required")
 )

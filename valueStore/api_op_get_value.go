@@ -96,7 +96,7 @@ type GetValueResponse struct {
 //  5. Reads and decodes the response body.
 //  6. Handles HTTP-level and API-level errors.
 //  7. Returns the parsed response on success.
-func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequest) (*GetValueResponse, error) {
+func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequest) (*Value, error) {
 
 	// 1. Validate Input Struct
 	if input == nil {
@@ -190,5 +190,11 @@ func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequ
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	return &apiResp, nil
+	return &Value{
+		NameSpace: apiResp.NameSpace,
+		Key:       apiResp.Key,
+		Value:     apiResp.Value,
+		Type:      apiResp.Type,
+		Size:      apiResp.Size,
+	}, nil
 }

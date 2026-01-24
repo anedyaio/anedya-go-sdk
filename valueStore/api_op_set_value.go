@@ -36,11 +36,17 @@ type Value struct {
 	// Key uniquely identifies the value within the namespace.
 	Key string `json:"key"`
 
-	// Value contains the stored data as a string representation.
-	Value string `json:"value"`
+	// Value contains the actual stored data.
+	//
+	// Since the Value Store supports multiple data types, this field holds
+	// the value as a generic interface{}. The underlying Go type depends
+	Value interface{} `json:"value"`
 
 	// Type indicates the data type of the stored value.
 	Type ValueType `json:"type"`
+
+	// Size represents the size of the stored value in bytes.
+	Size int `json:"size"`
 }
 
 // SetValueRequest represents the payload sent to the
@@ -145,6 +151,13 @@ func (v *ValueStoreManagement) SetValue(ctx context.Context, input *SetValueRequ
 		}
 	}
 
+	// Validate value
+	if input.Value == "" {
+		return &errors.AnedyaError{
+			Message: "value is required",
+			Err:     errors.ErrValueRequired,
+		}
+	}
 	// 2. Encode request body
 	requestBody, err := json.Marshal(input)
 	if err != nil {

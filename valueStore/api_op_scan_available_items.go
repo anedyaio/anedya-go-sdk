@@ -61,8 +61,6 @@ type ValueItem struct {
 
 // ListValuesResponse represents the response returned by the Scan/List Values API.
 type ListValuesResponse struct {
-	common.BaseResponse
-
 	// Count is the total number of items returned in this response.
 	Count int `json:"count"`
 
@@ -72,6 +70,15 @@ type ListValuesResponse struct {
 
 	// Data contains the list of keys matching the scan criteria.
 	Data []ValueItem `json:"data"`
+}
+
+// listValuesResponse is the internal struct used to decode the raw API JSON.
+// It includes BaseResponse to handle success flags and error codes.
+type listValuesResponse struct {
+	common.BaseResponse
+	Count int         `json:"count"`
+	Next  int         `json:"next"`
+	Data  []ValueItem `json:"data"`
 }
 
 // ScanAllAvailableItem retrieves a list of keys from the Value Store based on the provided filter and sorting options.
@@ -174,7 +181,7 @@ func (v *ValueStoreManagement) ScanAvailableItems(ctx context.Context, input *Li
 	}
 
 	// 6. Decode Response
-	var apiResp ListValuesResponse
+	var apiResp listValuesResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode scan response",
@@ -192,5 +199,9 @@ func (v *ValueStoreManagement) ScanAvailableItems(ctx context.Context, input *Li
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	return &apiResp, nil
+	return &ListValuesResponse{
+		Count: apiResp.Count,
+		Next:  apiResp.Next,
+		Data:  apiResp.Data,
+	}, nil
 }
