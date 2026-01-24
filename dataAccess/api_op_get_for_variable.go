@@ -1,5 +1,6 @@
 // Package dataAccess provides APIs to retrieve and manage
-// time-series data for nodes within the Anedya platform.
+// historical and latest time-series data for nodes
+// within the Anedya platform.
 package dataAccess
 
 import (
@@ -9,47 +10,48 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
+// ========================
+// REQUEST
+// ========================
+
 // GetDataRequest represents the payload used to fetch
-// time-series data for a variable across one or more nodes.
+// historical data points for a variable across one or more nodes
+// within a given time range.
 type GetDataRequest struct {
 	// Variable is the name of the variable whose data is requested.
 	Variable string `json:"variable"`
 
-	// Nodes is the list of node IDs for which data should be retrieved.
+	// Nodes is the list of node IDs for which data is requested.
 	Nodes []string `json:"nodes"`
 
-	// From is the start timestamp of the query range (Unix milliseconds).
+	// From is the start timestamp (inclusive) in milliseconds.
 	From int64 `json:"from"`
 
-	// To is the end timestamp of the query range (Unix milliseconds).
+	// To is the end timestamp (inclusive) in milliseconds.
 	To int64 `json:"to"`
 
-	// Limit restricts the maximum number of data points returned.
-	// If omitted, the server applies a default limit.
+	// Limit specifies the maximum number of data points to return per node.
 	Limit int `json:"limit,omitempty"`
 
-	// Order specifies the sort order of returned data points.
-	// Allowed values are "asc" or "desc".
+	// Order defines the sorting order of data points.
+	// Allowed values: "asc" or "desc".
 	Order string `json:"order,omitempty"`
 }
 
-// GetDataResponse represents the response returned by
-// the Get Data API.
-type GetDataResponse struct {
-	// Success indicates whether the request was processed successfully.
-	Success bool `json:"success"`
+// ========================
+// INTERNAL API RESPONSE
+// ========================
 
-	// Error contains a human-readable error message when Success is false.
-	Error string `json:"error"`
+// getDataAPIResponse represents the raw response returned
+// by the Get Data API.
+type getDataAPIResponse struct {
+	common.BaseResponse
 
-	// ReasonCode is the machine-readable error code
-	// used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
-
-	// Variable is the name of the requested variable.
+	// Variable is the variable name for which data was fetched.
 	Variable string `json:"variable"`
 
 	// Count represents the total number of data points returned.
@@ -59,30 +61,51 @@ type GetDataResponse struct {
 	Data map[string][]DataPoint `json:"data"`
 }
 
-// GetData retrieves time-series data for a variable across one or more nodes
-// from the Anedya platform.
+// ========================
+// RESULT
+// ========================
+
+// GetDataResult represents the processed and user-facing
+// result returned by the GetData method.
+type GetDataResult struct {
+	// Variable is the variable name for which data was fetched.
+	Variable string
+
+	// Count represents the total number of data points returned.
+	Count int
+
+	// Data maps node IDs to their corresponding data points.
+	Data map[string][]DataPoint
+}
+
+// ========================
+// API
+// ========================
+
+// GetData retrieves historical data points for a variable
+// across one or more nodes within a specified time range.
 //
 // Steps performed by this method:
-//  1. Validate the request payload and mandatory fields.
+//  1. Validate the request payload and required fields.
 //  2. Marshal the request into JSON format.
 //  3. Build and send a POST request to the Get Data API.
-//  4. Decode the API response into GetDataResponse.
-//  5. Map API-level errors into structured SDK errors.
+//  4. Decode the API response.
+//  5. Convert the API response into a user-friendly result.
 //
 // Parameters:
 //   - ctx: Context used to control request lifecycle, cancellation, and deadlines.
 //   - req: Pointer to GetDataRequest containing query parameters.
 //
 // Returns:
-//   - (*GetDataResponse, nil) if the data is fetched successfully.
+//   - (*GetDataResult, nil) if the data is fetched successfully.
 //   - (nil, error) for validation or client-side failures.
-//   - (*GetDataResponse, error) when the API responds with an error.
+//   - (nil, error) when the API responds with an error.
 func (dm *DataManagement) GetData(
 	ctx context.Context,
 	req *GetDataRequest,
-) (*GetDataResponse, error) {
+) (*GetDataResult, error) {
 
-	// check if request is nil
+	// validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get data request cannot be nil",
@@ -90,7 +113,7 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// variable name must be provided
+	// variable name is mandatory
 	if req.Variable == "" {
 		return nil, &errors.AnedyaError{
 			Message: "variable is required",
@@ -106,7 +129,7 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// validate timestamp range
+	// validate time range
 	if req.From <= 0 || req.To <= 0 || req.From > req.To {
 		return nil, &errors.AnedyaError{
 			Message: "invalid from/to timestamp range",
@@ -114,7 +137,7 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// validate order field
+	// validate order value
 	if req.Order != "" && req.Order != "asc" && req.Order != "desc" {
 		return nil, &errors.AnedyaError{
 			Message: "order must be asc or desc",
@@ -125,7 +148,7 @@ func (dm *DataManagement) GetData(
 	// build API URL
 	url := fmt.Sprintf("%s/v1/data/getData", dm.baseURL)
 
-	// convert request to JSON
+	// marshal request body
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -148,7 +171,7 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// send HTTP request
+	// execute HTTP request
 	resp, err := dm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -159,7 +182,7 @@ func (dm *DataManagement) GetData(
 	defer resp.Body.Close()
 
 	// decode API response
-	var apiResp GetDataResponse
+	var apiResp getDataAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetData response",
@@ -167,11 +190,20 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// handle HTTP or API-level errors
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
-		return &apiResp, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	// handle HTTP-level errors
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
-	return &apiResp, nil
+	// handle API-level errors
+	if !apiResp.Success {
+		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	}
+
+	// return processed result
+	return &GetDataResult{
+		Variable: apiResp.Variable,
+		Count:    apiResp.Count,
+		Data:     apiResp.Data,
+	}, nil
 }

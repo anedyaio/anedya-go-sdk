@@ -1,5 +1,5 @@
-// Package dataAccess provides APIs to retrieve and manage
-// node-level data from the Anedya platform.
+// Package dataAccess provides APIs to retrieve historical,
+// latest, and snapshot data for nodes within the Anedya platform.
 package dataAccess
 
 import (
@@ -9,69 +9,87 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
+// ========================
+// REQUEST
+// ========================
+
 // GetSnapshotRequest represents the payload used to fetch
-// a snapshot of a variable's value for one or more nodes
-// at a specific point in time.
+// snapshot data of a variable for one or more nodes at
+// a specific timestamp.
 type GetSnapshotRequest struct {
-	// Timestamp represents the point in time (Unix epoch in milliseconds)
-	// for which the snapshot data is requested.
+	// Timestamp is the point in time (Unix milliseconds)
+	// at which the snapshot data is requested.
 	Timestamp int64 `json:"timestamp"`
 
 	// Variable is the name of the variable whose snapshot is requested.
 	Variable string `json:"variable"`
 
-	// Nodes is the list of node IDs for which snapshot data is required.
+	// Nodes is the list of node IDs for which snapshot data is requested.
 	Nodes []string `json:"nodes"`
 }
 
-// GetSnapshotResponse represents the response returned by
-// the Get Snapshot API.
-type GetSnapshotResponse struct {
-	// Success indicates whether the request was processed successfully.
-	Success bool `json:"success"`
+// ========================
+// INTERNAL API RESPONSE
+// ========================
 
-	// Error contains a human-readable error message when Success is false.
-	Error string `json:"error"`
+// getSnapshotAPIResponse represents the raw API response
+// returned by the Snapshot Data API.
+type getSnapshotAPIResponse struct {
+	common.BaseResponse
 
-	// ReasonCode is a machine-readable error code
-	// used by the SDK to map API errors.
-	ReasonCode string `json:"reasonCode,omitempty"`
-
-	// Data maps node IDs to their corresponding data points
-	// at the requested timestamp.
+	// Data maps node IDs to their snapshot data point.
 	Data map[string]DataPoint `json:"data"`
 
 	// Count represents the number of nodes for which data was returned.
 	Count int `json:"count"`
 }
 
-// GetSnapshot retrieves a snapshot of a variable's data
-// for one or more nodes at a specific timestamp.
+// ========================
+// RESULT
+// ========================
+
+// GetSnapshotResult represents the processed and user-facing
+// result returned by the GetSnapshot method.
+type GetSnapshotResult struct {
+	// Data maps node IDs to their snapshot data point.
+	Data map[string]DataPoint
+
+	// Count represents the number of nodes for which data was returned.
+	Count int
+}
+
+// ========================
+// API
+// ========================
+
+// GetSnapshot retrieves snapshot data of a variable for one or more
+// nodes at a specific timestamp.
 //
 // Steps performed by this method:
-//  1. Validate the request payload and mandatory fields.
+//  1. Validate request parameters.
 //  2. Marshal the request into JSON format.
-//  3. Build and send a POST request to the Snapshot API.
-//  4. Decode the API response into GetSnapshotResponse.
-//  5. Convert API-level errors into structured SDK errors.
+//  3. Build and send a POST request to the Snapshot Data API.
+//  4. Decode the API response.
+//  5. Convert the API response into a user-friendly result.
 //
 // Parameters:
 //   - ctx: Context used to control request lifecycle, cancellation, and deadlines.
 //   - req: Pointer to GetSnapshotRequest containing snapshot query parameters.
 //
 // Returns:
-//   - (*GetSnapshotResponse, nil) if the snapshot data is fetched successfully.
+//   - (*GetSnapshotResult, nil) if snapshot data is fetched successfully.
 //   - (nil, error) for validation or client-side failures.
-//   - (*GetSnapshotResponse, error) when the API responds with an error.
+//   - (nil, error) when the API responds with an error.
 func (dm *DataManagement) GetSnapshot(
 	ctx context.Context,
 	req *GetSnapshotRequest,
-) (*GetSnapshotResponse, error) {
+) (*GetSnapshotResult, error) {
 
-	// check if request is nil
+	// validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get snapshot request cannot be nil",
@@ -79,7 +97,7 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// variable name must be provided
+	// variable name is mandatory
 	if req.Variable == "" {
 		return nil, &errors.AnedyaError{
 			Message: "variable is required",
@@ -103,7 +121,7 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// validate each node ID
+	// validate node IDs
 	for i, node := range req.Nodes {
 		if node == "" {
 			return nil, &errors.AnedyaError{
@@ -116,7 +134,7 @@ func (dm *DataManagement) GetSnapshot(
 	// build API URL
 	url := fmt.Sprintf("%s/v1/data/snapshot", dm.baseURL)
 
-	// convert request to JSON
+	// marshal request body
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -139,7 +157,7 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// send HTTP request
+	// execute HTTP request
 	resp, err := dm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -150,7 +168,7 @@ func (dm *DataManagement) GetSnapshot(
 	defer resp.Body.Close()
 
 	// decode API response
-	var apiResp GetSnapshotResponse
+	var apiResp getSnapshotAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetSnapshot response",
@@ -158,11 +176,19 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// handle HTTP or API-level errors
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
-		return &apiResp, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	// handle HTTP-level errors
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
-	return &apiResp, nil
+	// handle API-level errors
+	if !apiResp.Success {
+		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	}
+
+	// return processed result
+	return &GetSnapshotResult{
+		Data:  apiResp.Data,
+		Count: apiResp.Count,
+	}, nil
 }
