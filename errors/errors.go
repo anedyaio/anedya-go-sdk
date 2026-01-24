@@ -75,7 +75,6 @@ var codeMap = map[string]error{
 func GetError(code, message string) error {
 	sentinel, ok := codeMap[code]
 	if !ok {
-		message = fmt.Sprintf("%s (Hidden Code: %s)", message, code)
 		sentinel = ErrUnknown
 	}
 
