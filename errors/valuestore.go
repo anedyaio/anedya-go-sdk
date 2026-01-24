@@ -32,4 +32,7 @@ var (
 
 	// ErrValueRequired indicates that the value field is missing, which is mandatory for set value.
 	ErrValueRequired = errors.New("Value is required")
+
+	// ErrKeyNotFound indicated that the enterd key is not available
+	ErrKeyNotFound = errors.New("Key not found")
 )

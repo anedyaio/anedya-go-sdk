@@ -62,12 +62,20 @@ var codeMap = map[string]error{
 	// accesstoken errors
 	"fa::invalidexpiry": ErrExpiryRequried,
 	"fa::tokennofound":  ErrInvalidToken,
+
+	// valuestore errors
+	"vs::invalidscope":   ErrInvalidNamespaceScope,
+	"vs::invalidtype":    ErrInvalidValueType,
+	"vs::invalidns":      ErrInvalidNamespaceScope,
+	"vs::invalidrequest": ErrInvalidInput,
+	"vs::keynotfound":    ErrKeyNotFound,
 }
 
 // GetError converts an API reason code and message into an AnedyaError.
 func GetError(code, message string) error {
 	sentinel, ok := codeMap[code]
 	if !ok {
+		message = fmt.Sprintf("%s (Hidden Code: %s)", message, code)
 		sentinel = ErrUnknown
 	}
 

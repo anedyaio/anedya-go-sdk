@@ -143,6 +143,14 @@ func (v *ValueStoreManagement) SetValue(ctx context.Context, input *SetValueRequ
 		}
 	}
 
+	// Validate value
+	if input.Value == "" {
+		return &errors.AnedyaError{
+			Message: "value is required",
+			Err:     errors.ErrValueRequired,
+		}
+	}
+
 	// Validate value type
 	if !isValidValueType(input.Type) {
 		return &errors.AnedyaError{
@@ -151,13 +159,6 @@ func (v *ValueStoreManagement) SetValue(ctx context.Context, input *SetValueRequ
 		}
 	}
 
-	// Validate value
-	if input.Value == "" {
-		return &errors.AnedyaError{
-			Message: "value is required",
-			Err:     errors.ErrValueRequired,
-		}
-	}
 	// 2. Encode request body
 	requestBody, err := json.Marshal(input)
 	if err != nil {

@@ -106,19 +106,19 @@ func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequ
 		}
 	}
 
-	// Validate scope
-	if !isValidScope(input.NameSpace.Scope) {
-		return nil, &errors.AnedyaError{
-			Message: "invalid namespace scope",
-			Err:     errors.ErrInvalidNamespaceScope,
-		}
-	}
-
 	// Validate Namespace Id
 	if input.NameSpace.Id == "" {
 		return nil, &errors.AnedyaError{
 			Message: "namespace id is required",
 			Err:     errors.ErrValueNamespaceIdRequired,
+		}
+	}
+
+	// Validate scope
+	if !isValidScope(input.NameSpace.Scope) {
+		return nil, &errors.AnedyaError{
+			Message: "invalid namespace scope",
+			Err:     errors.ErrInvalidNamespaceScope,
 		}
 	}
 
@@ -191,7 +191,7 @@ func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequ
 	}
 
 	return &Value{
-		NameSpace: apiResp.NameSpace,
+		NameSpace: input.NameSpace,
 		Key:       apiResp.Key,
 		Value:     apiResp.Value,
 		Type:      apiResp.Type,
