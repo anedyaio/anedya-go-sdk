@@ -40,7 +40,7 @@ type Value struct {
 	//
 	// Since the Value Store supports multiple data types, this field holds
 	// the value as a generic interface{}. The underlying Go type depends
-	Value interface{} `json:"value"`
+	Value json.RawMessage `json:"value"`
 
 	// Type indicates the data type of the stored value.
 	Type ValueType `json:"type"`

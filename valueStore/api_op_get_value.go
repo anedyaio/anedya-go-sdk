@@ -69,7 +69,7 @@ type GetValueResponse struct {
 	//   - boolean  → bool
 	//   - float    → float64
 	//   - binary   → string (base64 encoded)
-	Value interface{} `json:"value"`
+	Value json.RawMessage `json:"value"`
 }
 
 // GetValue retrieves a stored value from the Anedya value store.
