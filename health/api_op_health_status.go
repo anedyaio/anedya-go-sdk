@@ -21,10 +21,7 @@ const (
 )
 
 // HealthStatusRequest represents the payload used to query
-// the health status of one or more nodes.
-//
-// The health status is determined based on the last heartbeat
-// timestamp and the provided threshold duration.
+// the health and connectivity status of one or more nodes.
 type HealthStatusRequest struct {
 	// Nodes is the list of node IDs whose health status
 	// needs to be checked.
@@ -47,43 +44,49 @@ type HealthStatusDetails struct {
 	LastHeartbeat int `json:"lastHeartbeat"`
 }
 
-// HealthStatusResponse represents the response returned
-// by the Health Status API.
-type HealthStatusResponse struct {
-	// BaseResponse contains common response fields such as
-	// Success, Error, and ReasonCode.
+// healthStatusAPIResponse represents the raw response
+// returned by the Health Status API.
+type healthStatusAPIResponse struct {
 	common.BaseResponse
-
-	// Data maps node IDs to their corresponding
-	// health status details.
 	Data map[string]HealthStatusDetails `json:"data"`
+}
+
+// HealthStatusResult represents the response returned
+// to SDK users, exposing only relevant health data.
+type HealthStatusResult struct {
+	// Data maps node IDs to their corresponding health status.
+	Data map[string]HealthStatusDetails
 }
 
 // GetHealthStatus checks whether one or more nodes are online
 // based on their last heartbeat timestamp.
 //
+// A node is considered online if its last heartbeat
+// falls within the provided LastContactThreshold duration.
+//
 // Steps performed by this method:
-//  1. Validate the request payload and threshold constraints.
-//  2. Marshal the request into JSON format.
-//  3. Build and send a POST request to the Health Status API.
-//  4. Decode the API response into HealthStatusResponse.
-//  5. Map API-level errors into structured SDK errors.
+//  1. Validate the request payload and mandatory fields.
+//  2. Enforce maximum allowed heartbeat threshold.
+//  3. Marshal the request into JSON format.
+//  4. Build and send a POST request to the Health Status API.
+//  5. Decode the API response.
+//  6. Map API-level errors into structured SDK errors.
+//  7. Return a clean, user-facing response.
 //
 // Parameters:
-//   - ctx: Context used to control request lifecycle,
-//     cancellation, and deadlines.
+//   - ctx: Context used to control request cancellation and deadlines.
 //   - req: Pointer to HealthStatusRequest containing node IDs
 //     and heartbeat threshold.
 //
 // Returns:
-//   - (*HealthStatusResponse, nil) if health status is fetched successfully.
-//   - (nil, error) for validation, network, or API-level failures.
+//   - (*HealthStatusResult, nil) if health status is fetched successfully.
+//   - (nil, error) for validation, network, or API failures.
 func (hm *HealthManagement) GetHealthStatus(
 	ctx context.Context,
 	req *HealthStatusRequest,
-) (*HealthStatusResponse, error) {
+) (*HealthStatusResult, error) {
 
-	// check if request is nil
+	// request must not be nil
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "health status request cannot be nil",
@@ -91,7 +94,7 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// at least one node must be provided
+	// at least one node is required
 	if len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "at least one node must be provided",
@@ -99,7 +102,7 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// validate heartbeat threshold
+	// validate threshold value
 	if req.LastContactThreshold <= 0 {
 		return nil, &errors.AnedyaError{
 			Message: "lastContactThreshold must be greater than zero",
@@ -107,7 +110,7 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// threshold must not exceed allowed maximum
+	// enforce maximum threshold
 	if req.LastContactThreshold > maxHealthThresholdSec {
 		return nil, &errors.AnedyaError{
 			Message: "lastContactThreshold cannot exceed 7 days",
@@ -141,7 +144,7 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// send HTTP request
+	// execute HTTP request
 	resp, err := hm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -152,7 +155,7 @@ func (hm *HealthManagement) GetHealthStatus(
 	defer resp.Body.Close()
 
 	// decode API response
-	var apiResp HealthStatusResponse
+	var apiResp healthStatusAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode health status response",
@@ -170,8 +173,8 @@ func (hm *HealthManagement) GetHealthStatus(
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
-	return &HealthStatusResponse{
+	// success: return clean SDK response
+	return &HealthStatusResult{
 		Data: apiResp.Data,
 	}, nil
 }
