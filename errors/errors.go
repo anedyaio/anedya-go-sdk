@@ -65,6 +65,13 @@ var codeMap = map[string]error{
 	// accesstoken errors
 	"fa::invalidexpiry": ErrExpiryRequried,
 	"fa::tokennofound":  ErrInvalidToken,
+
+	// valuestore errors
+	"vs::invalidscope":   ErrInvalidNamespaceScope,
+	"vs::invalidtype":    ErrInvalidValueType,
+	"vs::invalidns":      ErrInvalidNamespaceScope,
+	"vs::invalidrequest": ErrInvalidInput,
+	"vs::keynotfound":    ErrKeyNotFound,
 }
 
 // GetError converts an API reason code and message into an AnedyaError.
