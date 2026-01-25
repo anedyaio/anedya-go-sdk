@@ -59,6 +59,15 @@ var codeMap = map[string]error{
 	"variable::variablerequired": ErrVariableRequired,
 	"variable::typerequired":     ErrVariableTypeRequired,
 
+	// Aggregation API errors
+	"aggregates::invalidaggregationmethod": ErrInvalidAggregationMethod,
+	"aggregates::missingaggregationmethod": ErrAggregationMethodRequired,
+	"aggregates::invalidintervalmeasure":   ErrInvalidIntervalMeasure,
+	"aggregates::invalidinterval":          ErrInvalidInterval,
+	"aggregates::invalidtimezone":          ErrInvalidTimezone,
+	"aggregates::invalidfiltertype":        ErrInvalidFilterType,
+	"aggregates::invalidtimerange":         ErrInvalidTimeRange,
+
 	// Health API errors
 	"health::limitexceeded": ErrHealthLimitExceeded,
 
