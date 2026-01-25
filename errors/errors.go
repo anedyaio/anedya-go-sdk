@@ -62,6 +62,15 @@ var codeMap = map[string]error{
 	// Health API errors
 	"health::limitexceeded": ErrHealthLimitExceeded,
 
+	// Aggregation API errors
+	"aggregates::invalidaggregationmethod": ErrInvalidAggregationMethod,
+	"aggregates::missingaggregationmethod": ErrAggregationMethodRequired,
+	"aggregates::invalidintervalmeasure":   ErrInvalidIntervalMeasure,
+	"aggregates::invalidinterval":          ErrInvalidInterval,
+	"aggregates::invalidtimezone":          ErrInvalidTimezone,
+	"aggregates::invalidfiltertype":        ErrInvalidFilterType,
+	"aggregates::invalidtimerange":         ErrInvalidTimeRange,
+
 	// accesstoken errors
 	"fa::invalidexpiry": ErrExpiryRequried,
 	"fa::tokennofound":  ErrInvalidToken,
