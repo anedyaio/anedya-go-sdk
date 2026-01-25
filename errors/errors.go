@@ -54,15 +54,6 @@ var codeMap = map[string]error{
 	"logs::invalidnodeid":    ErrInvalidNodeID,
 	"logs::invalidtimerange": ErrInvalidTimeRange,
 
-	// Aggregation API errors
-	"aggregates::invalidaggregationmethod": ErrInvalidAggregationMethod,
-	"aggregates::missingaggregationmethod": ErrAggregationMethodRequired,
-	"aggregates::invalidintervalmeasure":   ErrInvalidIntervalMeasure,
-	"aggregates::invalidinterval":          ErrInvalidInterval,
-	"aggregates::invalidtimezone":          ErrInvalidTimezone,
-	"aggregates::invalidfiltertype":        ErrInvalidFilterType,
-	"aggregates::invalidtimerange":         ErrInvalidTimeRange,
-
 	// variable errors
 	"variable::namerequired":     ErrVariableNameRequired,
 	"variable::variablerequired": ErrVariableRequired,
