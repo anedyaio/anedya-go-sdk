@@ -72,6 +72,13 @@ var codeMap = map[string]error{
 	"vs::invalidns":      ErrInvalidNamespaceScope,
 	"vs::invalidrequest": ErrInvalidInput,
 	"vs::keynotfound":    ErrKeyNotFound,
+
+	// Commands API errors
+	"cmd::invalidexpiry": ErrInvalidExpiry,
+	"cmd::unknowntype":   ErrUnknownDataType,
+	"cmd::notfound":      ErrCommandNotFound,
+	"cmd::invalidfilter": ErrInvalidFilter,
+	"cmd::cmdidtoolong":  ErrInvalidNodeID,
 }
 
 // GetError converts an API reason code and message into an AnedyaError.
