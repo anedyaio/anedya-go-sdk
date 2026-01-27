@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -32,7 +33,7 @@ type DeleteVariableRequest struct {
 // It embeds BaseResponse, which contains the standard API
 // success flag, error message, and reason code.
 type DeleteVariableResponse struct {
-	BaseResponse
+	common.BaseResponse
 }
 
 // DeleteVariable deletes an existing variable from the Anedya platform.

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -54,7 +55,7 @@ type VariableListItem struct {
 // ListAllVariableResponse represents the response returned by
 // the List Variables API endpoint.
 type ListAllVariableResponse struct {
-	BaseResponse
+	common.BaseResponse
 
 	// CurrentCount indicates the number of variables returned
 	// in the current response.
