@@ -25,6 +25,7 @@ type Client struct {
 	AccessTokenManagement *accesstokens.AccessTokenManagement
 	DeviceLogManagement   *deviceLogs.DeviceLogManagement
 	HealthManagement      *health.HealthManagement
+	ValueStoreManagement  *valuestore.ValueStoreManagement
 }
 
 func NewClient(baseURL, apiKey string) *Client {
@@ -46,6 +47,7 @@ func NewClient(baseURL, apiKey string) *Client {
 		AccessTokenManagement: accesstokens.NewAccessTokenManagement(hc, baseURL),
 		DeviceLogManagement:   deviceLogs.NewDeviceLogManagement(hc, baseURL),
 		HealthManagement:      health.NewHealthManagement(hc, baseURL),
+		ValueStoreManagement:  valuestore.NewValueStoreManagement(hc, baseURL),
 	}
 }
 
