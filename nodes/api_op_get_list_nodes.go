@@ -1,3 +1,5 @@
+// Package nodes provides APIs to manage nodes and retrieve
+// node-related information from the Anedya platform.
 package nodes
 
 import (
@@ -7,75 +9,97 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// GetNodeListRequest represents the payload sent to the Get Node List API.
-// It contains pagination and sorting parameters.
+// GetNodeListRequest represents the payload used to
+// retrieve a paginated list of nodes.
+//
+// It supports pagination and ordering of node IDs.
 type GetNodeListRequest struct {
-	// Limit specifies the maximum number of nodes to return in a single request.
-	// The value must be between 1 and 1000.
+	// Limit specifies the maximum number of nodes
+	// to return in a single request.
 	Limit int `json:"limit,omitempty"`
 
-	// Offset specifies the number of nodes to skip before starting to return results.
+	// Offset specifies the starting position
+	// for pagination.
 	Offset int `json:"offset,omitempty"`
 
-	// Order specifies the sorting order of the node list.
-	// Supported values are:
-	//   - "asc"  : ascending order
-	//   - "desc" : descending order
+	// Order specifies the sorting order of nodes.
+	// Allowed values are "asc" or "desc".
 	Order string `json:"order,omitempty"`
 }
 
-// GetNodeListResponse represents the response returned by the Get Node List API.
-type GetNodeListResponse struct {
-	// Success indicates whether the request was successful.
-	Success bool `json:"success"`
+// getNodeListAPIResponse represents the raw response
+// returned by the Node List API.
+//
+// This structure is internal and mapped to
+// GetNodeListResult before being returned to the caller.
+type getNodeListAPIResponse struct {
+	common.BaseResponse
 
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
-
-	// CurrentCount indicates the number of nodes returned in the current response.
+	// CurrentCount is the number of nodes returned
+	// in the current response.
 	CurrentCount int `json:"currentCount"`
 
-	// TotalCount indicates the total number of nodes available on the platform.
+	// TotalCount is the total number of nodes
+	// available in the system.
 	TotalCount int `json:"totalCount"`
 
-	// Nodes contains the list of node identifiers returned by the API.
+	// Nodes contains the list of node IDs.
 	Nodes []string `json:"nodes"`
 
-	// Offset indicates the offset value used for the current response.
+	// Offset indicates the pagination offset
+	// used for this response.
 	Offset int `json:"offset"`
 }
 
-// GetNodeList retrieves a paginated list of nodes from the Anedya platform.
+// GetNodeListResult represents the processed result
+// returned to SDK consumers after fetching the node list.
+type GetNodeListResult struct {
+	// CurrentCount is the number of nodes
+	// returned in the current response.
+	CurrentCount int
+
+	// TotalCount is the total number of nodes
+	// available across all pages.
+	TotalCount int
+
+	// Offset indicates the pagination offset
+	// used to retrieve this result.
+	Offset int
+
+	// Nodes contains the list of node IDs.
+	Nodes []string
+}
+
+// GetNodeList retrieves a paginated list of node IDs
+// from the Anedya platform.
 //
-// This method performs the following operations:
-//  1. Validates the request payload and mandatory fields (Limit and Order).
-//  2. Marshals the request payload into JSON.
-//  3. Constructs an HTTP POST request to the Get Node List API endpoint.
-//  4. Executes the HTTP request using the NodeManagement's HTTP client.
-//  5. Decodes the API response into GetNodeListResponse.
-//  6. Checks API response status and maps API errors into structured SDK errors.
+// Steps performed by this method:
+//  1. Validate the request payload and parameters.
+//  2. Marshal the request into JSON format.
+//  3. Build and send a POST request to the Node List API.
+//  4. Decode the API response.
+//  5. Map API-level errors into structured SDK errors.
+//  6. Convert the API response into GetNodeListResult.
 //
 // Parameters:
-//   - ctx: Context for controlling request cancellation and timeout.
-//   - req: Pointer to GetNodeListRequest containing pagination and sorting info.
+//   - ctx: Context used to control request lifecycle,
+//     cancellation, and deadlines.
+//   - req: Pointer to GetNodeListRequest containing
+//     pagination and ordering options.
 //
 // Returns:
-//   - *GetNodeListResponse: Contains node identifiers and pagination metadata on success.
-//   - error: Returns nil on success, otherwise a sentinel error or *errors.AnedyaError
-//     if validation, network, or API errors occur.
+//   - (*GetNodeListResult, nil) on successful execution.
+//   - (nil, error) for validation, network, or API errors.
 func (nm *NodeManagement) GetNodeList(
 	ctx context.Context,
 	req *GetNodeListRequest,
-) (*GetNodeListResponse, error) {
+) (*GetNodeListResult, error) {
 
-	// Validate request object
+	// check if request is nil
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get node list request cannot be nil",
@@ -83,7 +107,7 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// Validate Limit
+	// validate limit range
 	if req.Limit <= 0 || req.Limit > 1000 {
 		return nil, &errors.AnedyaError{
 			Message: "limit must be between 1 and 1000",
@@ -91,15 +115,15 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// Validate Order
-	if req.Order != "asc" && req.Order != "desc" {
+	// validate order field
+	if req.Order != "" && req.Order != "asc" && req.Order != "desc" {
 		return nil, &errors.AnedyaError{
 			Message: "order must be either 'asc' or 'desc'",
 			Err:     errors.ErrNodeListInvalidOrder,
 		}
 	}
 
-	// Marshal request payload to JSON
+	// convert request to JSON
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -108,11 +132,16 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// Construct API endpoint URL
+	// build API URL
 	url := fmt.Sprintf("%s/v1/node/list", nm.baseURL)
 
-	// Build HTTP POST request with context
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	// create HTTP request with context
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		url,
+		bytes.NewBuffer(body),
+	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to build GetNodeList request",
@@ -120,7 +149,7 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// Execute HTTP request
+	// send HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -130,8 +159,8 @@ func (nm *NodeManagement) GetNodeList(
 	}
 	defer resp.Body.Close()
 
-	// Decode API response
-	var apiResp GetNodeListResponse
+	// decode API response
+	var apiResp getNodeListAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetNodeList response",
@@ -139,18 +168,16 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// HTTP-level error
-	if resp.StatusCode != http.StatusOK {
+	// HTTP-level or API-level error
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// API-level error handling
-	if !apiResp.Success {
-		sdkErr := errors.GetError(apiResp.ReasonCode, apiResp.Error)
-		// Return any other API errors
-		return nil, sdkErr
-	}
-
-	// Success
-	return &apiResp, nil
+	// success
+	return &GetNodeListResult{
+		CurrentCount: apiResp.CurrentCount,
+		TotalCount:   apiResp.TotalCount,
+		Offset:       apiResp.Offset,
+		Nodes:        apiResp.Nodes,
+	}, nil
 }

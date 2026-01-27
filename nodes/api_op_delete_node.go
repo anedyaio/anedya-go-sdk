@@ -113,13 +113,8 @@ func (nm *NodeManagement) DeleteNode(
 		}
 	}
 
-	// HTTP-level error
-	if resp.StatusCode != http.StatusOK {
-		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// API-level error
-	if !apiResp.Success {
+	// HTTP-level or API-level error
+	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

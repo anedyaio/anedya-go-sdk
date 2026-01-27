@@ -1,3 +1,5 @@
+// Package nodes provides APIs to manage nodes and retrieve
+// node-related information from the Anedya platform.
 package nodes
 
 import (
@@ -7,57 +9,56 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// GetNodeDetailsRequest represents the request payload sent to the Get Node Details API.
-// It contains a list of node IDs whose details are requested.
+// GetNodeDetailsRequest represents the payload used to
+// fetch detailed information for one or more nodes.
 type GetNodeDetailsRequest struct {
-	// Nodes is a list of node IDs for which details are required.
-	// At least one node ID must be provided.
+	// Nodes is the list of node IDs for which details
+	// are to be retrieved.
 	Nodes []string `json:"nodes"`
 }
 
-// GetNodeDetailsResponse represents the response returned by the Get Node Details API.
-type GetNodeDetailsResponse struct {
-	// Success indicates whether the request was processed successfully.
-	Success bool `json:"success"`
+// getNodeDetailsAPIResponse represents the raw response
+// returned by the Node Details API.
+//
+// This structure is internal and mapped directly to
+// the SDK result before being returned to the caller.
+type getNodeDetailsAPIResponse struct {
+	common.BaseResponse
 
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
-
-	// Data contains node details mapped by node ID.
+	// Data maps node IDs to their corresponding
+	// node details.
 	Data map[string]Node `json:"data,omitempty"`
 }
 
-// GetNodeDetails retrieves detailed information for one or more nodes from the Anedya platform.
+// GetNodeDetails retrieves detailed information for one
+// or more nodes from the Anedya platform.
 //
-// This method performs the following operations:
-//  1. Validates the request payload and ensures at least one node ID is provided.
-//  2. Marshals the request payload into JSON.
-//  3. Constructs an HTTP POST request to the Get Node Details API endpoint.
-//  4. Executes the HTTP request using the NodeManagement's HTTP client.
-//  5. Decodes the API response into GetNodeDetailsResponse.
-//  6. Checks API response status and maps API errors into structured SDK errors.
+// Steps performed by this method:
+//  1. Validate the request payload.
+//  2. Marshal the request into JSON format.
+//  3. Build and send a POST request to the Node Details API.
+//  4. Decode the API response.
+//  5. Map API-level errors into structured SDK errors.
 //
 // Parameters:
-//   - ctx: Context for controlling request cancellation and timeout.
-//   - req: Pointer to GetNodeDetailsRequest containing the node IDs.
+//   - ctx: Context used to control request lifecycle,
+//     cancellation, and deadlines.
+//   - req: Pointer to GetNodeDetailsRequest containing
+//     the list of node IDs.
 //
 // Returns:
-//   - map[string]NodeDetails: Mapping of node IDs to NodeDetails on success.
-//   - error: Returns nil on success, otherwise a sentinel error or *errors.AnedyaError
-//     if validation, network, or API errors occur.
+//   - (map[string]Node, nil) on successful execution.
+//   - (nil, error) for validation, network, or API errors.
 func (nm *NodeManagement) GetNodeDetails(
 	ctx context.Context,
 	req *GetNodeDetailsRequest,
 ) (map[string]Node, error) {
 
-	// Validate request
+	// check if request is nil or empty
 	if req == nil || len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "node list cannot be empty",
@@ -65,7 +66,7 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// Marshal request payload to JSON
+	// convert request to JSON
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -74,11 +75,16 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// Construct API endpoint URL
+	// build API URL
 	url := fmt.Sprintf("%s/v1/node/details", nm.baseURL)
 
-	// Build HTTP POST request with context
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	// create HTTP request with context
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		url,
+		bytes.NewBuffer(body),
+	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to build GetNodeDetails request",
@@ -86,7 +92,11 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// Execute HTTP request
+	// set request headers
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+
+	// send HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -96,8 +106,8 @@ func (nm *NodeManagement) GetNodeDetails(
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
-	var apiResp GetNodeDetailsResponse
+	// decode API response
+	var apiResp getNodeDetailsAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetNodeDetails response",
@@ -105,11 +115,11 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// Handle HTTP or API errors
+	// HTTP-level or API-level error
 	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Success: return the node details map
+	// success
 	return apiResp.Data, nil
 }
