@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -32,7 +33,7 @@ type RevokeAccessTokenRequest struct {
 // It embeds BaseResponse, which contains the standard API
 // success flag, error message, and reason code.
 type RevokeAccessTokenResponse struct {
-	BaseResponse
+	common.BaseResponse
 }
 
 // RevokeAccessToken revokes an existing access token in the Anedya platform.
