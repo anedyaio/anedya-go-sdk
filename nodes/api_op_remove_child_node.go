@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -23,15 +24,7 @@ type RemoveChildNodeRequest struct {
 
 // RemoveChildNodeResponse represents the response returned by the Remove Child Node API.
 type RemoveChildNodeResponse struct {
-	// Success indicates whether the removal operation was successful.
-	Success bool `json:"success"`
-
-	// Error contains a human-readable error message returned by the API
-	// if the operation was unsuccessful.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 }
 
 // RemoveChildNode detaches a child node from its parent node in the Anedya platform.

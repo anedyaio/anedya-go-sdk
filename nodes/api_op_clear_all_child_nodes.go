@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -18,17 +19,13 @@ type ClearChildNodesRequest struct {
 	ParentId string `json:"parentId"`
 }
 
-// ClearChildNodesResponse represents the response returned by the Clear Child Nodes API.
+// ClearChildNodesResponse represents the response returned by
+// the Clear Child Nodes API.
+//
+// It embeds common.BaseResponse to provide standard
+// success, error message, and reason code fields.
 type ClearChildNodesResponse struct {
-	// Success indicates whether the operation was completed successfully.
-	Success bool `json:"success"`
-
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 }
 
 // ClearChildNodes removes all child nodes associated with a given parent node in the Anedya platform.

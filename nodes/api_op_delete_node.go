@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -19,15 +20,7 @@ type DeleteNodeRequest struct {
 
 // DeleteNodeResponse represents the response returned by the Delete Node API.
 type DeleteNodeResponse struct {
-	// Success indicates whether the node was deleted successfully.
-	Success bool `json:"success"`
-
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 }
 
 // DeleteNode deletes a node from the Anedya platform.

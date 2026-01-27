@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -20,15 +21,7 @@ type GetConnectionKeyRequest struct {
 
 // GetConnectionKeyResponse represents the response returned by the Get Connection Key API.
 type GetConnectionKeyResponse struct {
-	// Success indicates whether the request was successful.
-	Success bool `json:"success"`
-
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 
 	// ConnectionKey is the connection key associated with the node.
 	ConnectionKey string `json:"connectionKey,omitempty"`

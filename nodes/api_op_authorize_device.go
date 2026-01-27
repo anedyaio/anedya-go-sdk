@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -22,17 +23,13 @@ type AuthorizeDeviceRequest struct {
 	DeviceID string `json:"deviceid"`
 }
 
-// AuthorizeDeviceResponse represents the response returned by the Authorize Device API.
+// AuthorizeDeviceResponse represents the response returned by
+// the Authorize Device API.
+//
+// It embeds common.BaseResponse to provide standard
+// success, error message, and reason code fields.
 type AuthorizeDeviceResponse struct {
-	// Success indicates whether the device authorization request was successful.
-	Success bool `json:"success"`
-
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 }
 
 // AuthorizeDevice authorizes a device to connect to a node in the Anedya platform.

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -61,18 +62,7 @@ type UpdateNodeRequest struct {
 // UpdateNodeResponse represents the response returned
 // by the Update Node API.
 type UpdateNodeResponse struct {
-
-	// Success indicates whether the update
-	// was applied successfully.
-	Success bool `json:"success"`
-
-	// Error contains a human-readable error message
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code
-	// used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 }
 
 // UpdateNode applies one or more updates to a node.
