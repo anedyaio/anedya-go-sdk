@@ -14,94 +14,207 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// GetAggregationByTimeRequest represents the request payload for fetching
-// time-based aggregations of variable data.
-//
-// Time aggregations are useful for answering questions such as:
-//   - What is the average value of a variable over a given time range?
-//   - What is the maximum value in every 15-minute interval?
-//   - What is the difference between the first and last value in a week?
+// AggregationType represents the type of aggregation
+// operation to be performed on time-series data.
+type AggregationType string
+
+const (
+	// AggregationSum computes the sum of values
+	// over the specified interval.
+	AggregationSum AggregationType = "sum"
+
+	// AggregationAvg computes the average value
+	// over the specified interval.
+	AggregationAvg AggregationType = "avg"
+
+	// AggregationMedian computes the median value
+	// over the specified interval.
+	AggregationMedian AggregationType = "median"
+
+	// AggregationMin computes the minimum value
+	// over the specified interval.
+	AggregationMin AggregationType = "min"
+
+	// AggregationMax computes the maximum value
+	// over the specified interval.
+	AggregationMax AggregationType = "max"
+
+	// AggregationDiff computes the difference between
+	// the first and last value in the interval.
+	AggregationDiff AggregationType = "diff"
+
+	// AggregationDeltaSum computes the delta sum while
+	// accounting for counter resets.
+	AggregationDeltaSum AggregationType = "deltasum"
+
+	// AggregationStdDev computes the standard deviation
+	// over the specified interval.
+	AggregationStdDev AggregationType = "stddev"
+)
+
+// IntervalMeasure represents the unit of time used
+// for aggregation intervals.
+type IntervalMeasure string
+
+const (
+	// MeasureYear represents yearly aggregation intervals.
+	MeasureYear IntervalMeasure = "year"
+
+	// MeasureMonth represents monthly aggregation intervals.
+	MeasureMonth IntervalMeasure = "month"
+
+	// MeasureWeek represents weekly aggregation intervals.
+	MeasureWeek IntervalMeasure = "week"
+
+	// MeasureDay represents daily aggregation intervals.
+	MeasureDay IntervalMeasure = "day"
+
+	// MeasureHour represents hourly aggregation intervals.
+	MeasureHour IntervalMeasure = "hour"
+
+	// MeasureMinute represents minute-based aggregation intervals.
+	MeasureMinute IntervalMeasure = "minute"
+)
+
+// FilterType represents the type of node filtering
+// applied during aggregation.
+type FilterType string
+
+const (
+	// FilterInclude includes only the specified nodes
+	// in the aggregation computation.
+	FilterInclude FilterType = "include"
+
+	// FilterExclude excludes the specified nodes
+	// from the aggregation computation.
+	FilterExclude FilterType = "exclude"
+)
+
+// AggregationConfig holds the complete configuration
+// required to perform a time-based aggregation.
+type AggregationConfig struct {
+	// Aggregation defines the aggregation method and options.
+	Aggregation AggregationObject `json:"aggregation"`
+
+	// Interval defines the time-based aggregation window.
+	Interval IntervalObject `json:"interval"`
+
+	// ResponseOptions defines formatting options
+	// for the aggregation response.
+	ResponseOptions ResponseOptions `json:"responseOptions,omitempty"`
+
+	// Filter defines optional node filtering rules.
+	Filter *FilterObject `json:"filter,omitempty"`
+}
+
+// AggregationObject defines the aggregation operation
+// to be performed.
+type AggregationObject struct {
+	// Compute specifies the aggregation type
+	// (sum, avg, min, max, etc.).
+	Compute AggregationType `json:"compute"`
+
+	// ForEachNode determines whether aggregation is computed
+	// per node or across all nodes.
+	ForEachNode bool `json:"forEachNode,omitempty"`
+}
+
+// IntervalObject defines the size and unit of the
+// aggregation time window.
+type IntervalObject struct {
+	// Measure specifies the unit of time
+	// (minute, hour, day, etc.).
+	Measure IntervalMeasure `json:"measure"`
+
+	// Interval specifies the number of units
+	// for the aggregation window.
+	Interval int `json:"interval"`
+}
+
+// ResponseOptions defines options for formatting
+// aggregation results.
+type ResponseOptions struct {
+	// Timezone specifies the timezone used for
+	// response timestamps (default: UTC).
+	Timezone string `json:"timezone,omitempty"`
+}
+
+// FilterObject defines node-level filtering rules
+// applied before aggregation.
+type FilterObject struct {
+	// Nodes is the list of node IDs used for filtering.
+	Nodes []string `json:"nodes,omitempty"`
+
+	// Type specifies whether nodes are included or excluded.
+	Type FilterType `json:"type,omitempty"`
+}
+
+// AggregateDataPoint represents a single aggregated
+// value for a specific time interval.
+type AggregateDataPoint struct {
+	// Timestamp indicates the start of the aggregation
+	// interval (Unix milliseconds).
+	Timestamp int64 `json:"timestamp"`
+
+	// Aggregate holds the computed aggregation value.
+	Aggregate float64 `json:"aggregate"`
+}
+
+// GetAggregationByTimeRequest represents the payload used
+// to request aggregated data for a variable over time.
 type GetAggregationByTimeRequest struct {
 	// Variable is the name of the variable to aggregate.
 	Variable string `json:"variable"`
 
-	// From is the start timestamp (inclusive) in Unix milliseconds.
+	// From is the start timestamp (Unix milliseconds).
 	From int64 `json:"from"`
 
-	// To is the end timestamp (inclusive) in Unix milliseconds.
+	// To is the end timestamp (Unix milliseconds).
 	To int64 `json:"to"`
 
-	// Config defines how the aggregation should be computed,
-	// including aggregation type, interval, and filters.
+	// Config defines the aggregation configuration.
 	Config AggregationConfig `json:"config"`
 }
 
-// getAggregationAPIResponse represents the raw response returned
-// by the Get Aggregation By Time API.
+// getAggregationAPIResponse represents the raw API response
+// returned by the aggregation endpoint.
 type getAggregationAPIResponse struct {
 	common.BaseResponse
-
-	// Variable is the variable name for which aggregation was performed.
-	Variable string `json:"variable"`
-
-	// Config is the aggregation configuration used for computation.
-	Config AggregationConfig `json:"config"`
-
-	// Data maps node IDs to their corresponding aggregated data points.
-	//
-	// Behavior depends on the aggregation configuration:
-	//   - forEachNode = true  → each node ID has its own aggregated series
-	//   - forEachNode = false → results may be grouped under a single key
-	Data map[string][]AggregateDataPoint `json:"data"`
+	Variable string                          `json:"variable"`
+	Config   AggregationConfig               `json:"config"`
+	Data     map[string][]AggregateDataPoint `json:"data"`
 }
 
-// GetAggregationResult represents the processed and user-facing
-// result returned by the GetAggregationByTime method.
+// GetAggregationResult represents the processed result
+// returned to SDK consumers.
 type GetAggregationResult struct {
-	// Variable is the variable name for which aggregation was performed.
+	// Variable is the name of the aggregated variable.
 	Variable string
 
 	// Config is the aggregation configuration used.
 	Config AggregationConfig
 
-	// Data maps node IDs to their corresponding aggregated data points.
+	// Data maps node IDs to their aggregated data points.
 	Data map[string][]AggregateDataPoint
 }
 
-// GetAggregationByTime retrieves time-based aggregations for a variable
-// across nodes within a specified time range.
-//
-// This API is designed to efficiently summarize large volumes of
-// time-series data into meaningful aggregated results.
-//
-// Supported aggregation types include:
-//   - sum       : Sum of values over each interval
-//   - avg       : Average value
-//   - median    : Median value
-//   - min / max : Minimum or maximum value
-//   - diff      : Difference between first and last value
-//   - deltasum  : Difference accounting for counter resets
-//   - stddev    : Standard deviation
-//
-// Notes:
-//   - Aggregation APIs incur charges based on GB scanned.
-//   - Maximum processing time per request is 10 seconds.
+// GetAggregationByTime retrieves aggregated data for a variable
+// over a specified time range.
 //
 // Steps performed by this method:
-//  1. Validate the request payload and required fields.
-//  2. Marshal the request into JSON format.
-//  3. Build and send a POST request to the aggregation API.
-//  4. Decode the API response.
-//  5. Convert the API response into a user-facing result.
+//  1. Validate request payload and aggregation configuration.
+//  2. Marshal the request into JSON.
+//  3. Send a POST request to the aggregation API.
+//  4. Decode and validate the API response.
+//  5. Map API errors into structured SDK errors.
 //
 // Parameters:
-//   - ctx: Context used to control request lifecycle, cancellation, and deadlines.
-//   - req: Pointer to GetAggregationByTimeRequest containing query parameters.
+//   - ctx: Context used to control request lifecycle and cancellation.
+//   - req: Pointer to GetAggregationByTimeRequest containing query details.
 //
 // Returns:
-//   - (*GetAggregationResult, nil) if aggregation is computed successfully.
-//   - (nil, error) for validation or client-side failures.
-//   - (nil, error) when the API responds with an error.
+//   - (*GetAggregationResult, nil) on successful aggregation.
+//   - (nil, error) for validation, network, or API errors.
 func (ac *AggregationsManagement) GetAggregationByTime(
 	ctx context.Context,
 	req *GetAggregationByTimeRequest,
@@ -131,7 +244,7 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// aggregation compute type must be specified
+	// aggregation compute type must be provided
 	if req.Config.Aggregation.Compute == "" {
 		return nil, &errors.AnedyaError{
 			Message: "aggregation compute type is required",
@@ -147,9 +260,8 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// validate optional filters
+	// validate filter configuration if present
 	if req.Config.Filter != nil {
-
 		if len(req.Config.Filter.Nodes) == 0 {
 			return nil, &errors.AnedyaError{
 				Message: "filter nodes cannot be empty",
@@ -213,7 +325,10 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 	}
 
 	// handle HTTP or API-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices || !apiResp.Success {
+	if resp.StatusCode < http.StatusOK ||
+		resp.StatusCode >= http.StatusMultipleChoices ||
+		!apiResp.Success {
+
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
