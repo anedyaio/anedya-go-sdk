@@ -168,12 +168,14 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// HTTP-level or API-level error
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
+	// API-level error handling
+	if !apiResp.Success {
+		sdkErr := errors.GetError(apiResp.ReasonCode, apiResp.Error)
+		// Return any other API errors
+		return nil, sdkErr
 	}
 
-	// success
+	// Success
 	return &GetNodeListResult{
 		CurrentCount: apiResp.CurrentCount,
 		TotalCount:   apiResp.TotalCount,

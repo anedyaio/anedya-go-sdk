@@ -104,7 +104,7 @@ func (nm *NodeManagement) RemoveChildNode(ctx context.Context, req *RemoveChildN
 	}
 
 	// Handle all API errors automatically
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
+	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

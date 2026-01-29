@@ -164,9 +164,6 @@ func (v *VariableManagement) CreateVariable(ctx context.Context, input *CreateVa
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// 4. Execute request.
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
@@ -193,11 +190,6 @@ func (v *VariableManagement) CreateVariable(ctx context.Context, input *CreateVa
 			Message: "failed to decode CreateVariable response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// 7. Handle HTTP-level errors.
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// 8. Handle API-level errors.

@@ -86,9 +86,6 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// Step 4: Execute the HTTP request.
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
@@ -117,11 +114,6 @@ func (t *AccessTokenManagement) RevokeAccessToken(ctx context.Context, tokenId s
 			Message: "failed to decode revoke token response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// Step 7: Handle HTTP-level errors.
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// Step 8: Handle API-level errors.

@@ -231,9 +231,6 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// Send the HTTP request to the API server
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
@@ -261,11 +258,6 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 			Message: "failed to decode create token response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// Handle HTTP-level errors.
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// Handle API-level errors.

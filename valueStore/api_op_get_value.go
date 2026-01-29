@@ -149,9 +149,6 @@ func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequ
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// 4. Execute request
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
@@ -178,11 +175,6 @@ func (v *ValueStoreManagement) GetValue(ctx context.Context, input *GetValueRequ
 			Message: "failed to decode get value response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// 7. Handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// 8. Handle API-level errors.
