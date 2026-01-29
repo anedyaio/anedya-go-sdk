@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -56,32 +57,6 @@ type Variable struct {
 	TTL int `json:"ttl,omitempty"`
 }
 
-// VariableManagement provides methods to create, update, delete,
-// and retrieve variables from the Anedya API.
-//
-// It wraps an HTTP client and a base URL used to construct requests.
-type VariableManagement struct {
-
-	// httpClient is the underlying HTTP client used to
-	// perform API requests.
-	httpClient *http.Client
-
-	// baseURL is the root API endpoint used for all
-	// variable management requests.
-	baseURL string
-}
-
-// NewVariableManagement creates a new VariableManagement client.
-//
-// The provided http.Client is used for all network communication,
-// and baseURL specifies the API server address.
-func NewVariableManagement(c *http.Client, baseURL string) *VariableManagement {
-	return &VariableManagement{
-		httpClient: c,
-		baseURL:    baseURL,
-	}
-}
-
 // CreateVariableRequest represents the payload sent to the
 // Create Variable API endpoint.
 //
@@ -110,26 +85,10 @@ type CreateVariableRequest struct {
 	TTL int `json:"ttl,omitempty"`
 }
 
-// BaseResponse represents common fields returned by all
-// Anedya API responses.
-type BaseResponse struct {
-
-	// Success indicates whether the API request was successful.
-	Success bool `json:"success"`
-
-	// Error contains the error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode contains the machine-readable error code
-	// used for SDK error mapping.
-	ReasonCode string `json:"reasonCode"`
-}
-
 // CreateVariableResponse represents the response returned by
 // the Create Variable API endpoint.
 type CreateVariableResponse struct {
-	BaseResponse
+	common.BaseResponse
 
 	// VariableID is the identifier of the newly created variable.
 	VariableID string `json:"variableId"`
@@ -205,9 +164,6 @@ func (v *VariableManagement) CreateVariable(ctx context.Context, input *CreateVa
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// 4. Execute request.
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
@@ -234,11 +190,6 @@ func (v *VariableManagement) CreateVariable(ctx context.Context, input *CreateVa
 			Message: "failed to decode CreateVariable response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// 7. Handle HTTP-level errors.
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// 8. Handle API-level errors.

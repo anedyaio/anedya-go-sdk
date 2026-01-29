@@ -112,7 +112,7 @@ func (nm *NodeManagement) ClearChildNodes(
 	}
 
 	// handle HTTP or API level error
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
+	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

@@ -113,7 +113,7 @@ func (nm *NodeManagement) CreateNode(
 	}
 
 	// Check for any error (HTTP or API-level)
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
+	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

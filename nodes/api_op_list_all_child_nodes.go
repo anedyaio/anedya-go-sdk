@@ -190,8 +190,8 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// HTTP-level or API-level error
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
+	// Centralized API error handling
+	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

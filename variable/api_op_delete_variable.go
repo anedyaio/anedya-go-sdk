@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -32,7 +33,7 @@ type DeleteVariableRequest struct {
 // It embeds BaseResponse, which contains the standard API
 // success flag, error message, and reason code.
 type DeleteVariableResponse struct {
-	BaseResponse
+	common.BaseResponse
 }
 
 // DeleteVariable deletes an existing variable from the Anedya platform.
@@ -88,9 +89,6 @@ func (v *VariableManagement) DeleteVariable(ctx context.Context, variable string
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// 4. Execute request
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
@@ -117,11 +115,6 @@ func (v *VariableManagement) DeleteVariable(ctx context.Context, variable string
 			Message: "failed to decode DeleteVariable response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// 7. Handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// 8. Handle API-level errors

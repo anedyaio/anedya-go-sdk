@@ -115,8 +115,8 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// HTTP-level or API-level error
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
+	// Handle HTTP or API errors
+	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

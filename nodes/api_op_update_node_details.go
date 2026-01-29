@@ -179,7 +179,7 @@ func (nm *NodeManagement) UpdateNode(
 	}
 
 	// Handle HTTP or API-level errors
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
+	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

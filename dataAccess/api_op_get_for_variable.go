@@ -174,8 +174,8 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// handle HTTP-level and API-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices || !apiResp.Success {
+	// handle API-level errors
+	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

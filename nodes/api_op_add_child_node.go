@@ -142,7 +142,7 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 	}
 
 	// handle HTTP or API level errors
-	if resp.StatusCode != http.StatusOK || !apiResp.Success {
+	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
