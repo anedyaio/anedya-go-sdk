@@ -153,15 +153,14 @@ func (n *Node) ListChildNodes(ctx context.Context, limit int, offset int) ([]*No
 		return nil, err
 	}
 
-	nodes := make([]*Node, 0, len(resp.Data))
-	for _, child := range resp.Data {
-		node := &Node{
+	nodes := make([]*Node, 0, len(resp.Nodes))
+	for _, child := range resp.Nodes {
+		nodes = append(nodes, &Node{
 			NodeId:         child.ChildId,
 			NodeName:       child.Alias,
-			CreatedAt:      fmt.Sprintf("%d", child.CreatedAt), // string format, Node struct me string field assumed
+			CreatedAt:      fmt.Sprintf("%d", child.CreatedAt),
 			nodeManagement: n.nodeManagement,
-		}
-		nodes = append(nodes, node)
+		})
 	}
 
 	return nodes, nil
