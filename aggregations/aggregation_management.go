@@ -27,9 +27,6 @@ type AggregationsManagement struct {
 // Returns:
 //   - *AggregationsManagement: A configured aggregation API client.
 func NewAggregationsManagement(c *http.Client, baseURL string) *AggregationsManagement {
-	if c == nil {
-		c = http.DefaultClient
-	}
 	return &AggregationsManagement{
 		httpClient: c,
 		baseURL:    baseURL,
