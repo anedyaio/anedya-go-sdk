@@ -13,10 +13,6 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// ========================
-// REQUEST
-// ========================
-
 // GetSnapshotRequest represents the payload used to fetch
 // snapshot data of a variable for one or more nodes at
 // a specific timestamp.
@@ -32,10 +28,6 @@ type GetSnapshotRequest struct {
 	Nodes []string `json:"nodes"`
 }
 
-// ========================
-// INTERNAL API RESPONSE
-// ========================
-
 // getSnapshotAPIResponse represents the raw API response
 // returned by the Snapshot Data API.
 type getSnapshotAPIResponse struct {
@@ -48,10 +40,6 @@ type getSnapshotAPIResponse struct {
 	Count int `json:"count"`
 }
 
-// ========================
-// RESULT
-// ========================
-
 // GetSnapshotResult represents the processed and user-facing
 // result returned by the GetSnapshot method.
 type GetSnapshotResult struct {
@@ -61,10 +49,6 @@ type GetSnapshotResult struct {
 	// Count represents the number of nodes for which data was returned.
 	Count int
 }
-
-// ========================
-// API
-// ========================
 
 // GetSnapshot retrieves snapshot data of a variable for one or more
 // nodes at a specific timestamp.
@@ -176,13 +160,8 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// handle API-level errors
-	if !apiResp.Success {
+	// handle HTTP-level and API-level errors
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

@@ -14,10 +14,6 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// ========================
-// REQUEST
-// ========================
-
 // GetDataRequest represents the payload used to fetch
 // historical data points for a variable across one or more nodes
 // within a given time range.
@@ -42,10 +38,6 @@ type GetDataRequest struct {
 	Order string `json:"order,omitempty"`
 }
 
-// ========================
-// INTERNAL API RESPONSE
-// ========================
-
 // getDataAPIResponse represents the raw response returned
 // by the Get Data API.
 type getDataAPIResponse struct {
@@ -61,10 +53,6 @@ type getDataAPIResponse struct {
 	Data map[string][]DataPoint `json:"data"`
 }
 
-// ========================
-// RESULT
-// ========================
-
 // GetDataResult represents the processed and user-facing
 // result returned by the GetData method.
 type GetDataResult struct {
@@ -77,10 +65,6 @@ type GetDataResult struct {
 	// Data maps node IDs to their corresponding data points.
 	Data map[string][]DataPoint
 }
-
-// ========================
-// API
-// ========================
 
 // GetData retrieves historical data points for a variable
 // across one or more nodes within a specified time range.
@@ -190,13 +174,8 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// handle API-level errors
-	if !apiResp.Success {
+	// handle HTTP-level and API-level errors
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

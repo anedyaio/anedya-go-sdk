@@ -14,10 +14,6 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// ========================
-// REQUEST
-// ========================
-
 // GetLatestDataRequest represents the payload used to fetch
 // the most recent data point of a variable for one or more nodes.
 type GetLatestDataRequest struct {
@@ -27,10 +23,6 @@ type GetLatestDataRequest struct {
 	// Variable is the name of the variable whose latest value is requested.
 	Variable string `json:"variable"`
 }
-
-// ========================
-// INTERNAL API RESPONSE
-// ========================
 
 // getLatestDataAPIResponse represents the raw response
 // returned by the Get Latest Data API.
@@ -44,10 +36,6 @@ type getLatestDataAPIResponse struct {
 	Count int `json:"count"`
 }
 
-// ========================
-// RESULT
-// ========================
-
 // GetLatestDataResult represents the processed and user-facing
 // result returned by the GetLatestData method.
 type GetLatestDataResult struct {
@@ -57,10 +45,6 @@ type GetLatestDataResult struct {
 	// Count represents the number of nodes for which data was returned.
 	Count int
 }
-
-// ========================
-// API
-// ========================
 
 // GetLatestData retrieves the most recent data point of a variable
 // for one or more nodes.
@@ -164,13 +148,8 @@ func (dm *DataManagement) GetLatestData(
 		}
 	}
 
-	// handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
-	// handle API-level errors
-	if !apiResp.Success {
+	// handle HTTP-level and API-level errors
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 

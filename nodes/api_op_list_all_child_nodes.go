@@ -1,3 +1,5 @@
+// Package nodes provides APIs to manage nodes and
+// retrieve node hierarchy information from Anedya.
 package nodes
 
 import (
@@ -7,86 +9,115 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
-// ListChildNodesRequest represents the request payload sent to the List Child Nodes API.
-// It contains the parent node ID and optional pagination parameters.
+// ListChildNodesRequest represents the payload used to
+// retrieve child nodes of a given parent node.
 type ListChildNodesRequest struct {
 	// ParentId is the unique identifier of the parent node.
+	// This field is required.
 	ParentId string `json:"parentId"`
 
-	// Limit specifies the maximum number of child nodes to return in a single request.
-	// If not provided or out of bounds, a default of 100 is applied.
+	// Limit specifies the maximum number of child nodes
+	// to return in a single request.
+	//
+	// If not provided or out of range, a default value
+	// is applied by the SDK.
 	Limit int `json:"limit,omitempty"`
 
-	// Offset specifies the number of records to skip before returning results.
-	// Defaults to 0 if negative.
+	// Offset specifies the starting point for pagination.
+	// It is used to fetch the next set of child nodes.
 	Offset int `json:"offset,omitempty"`
 }
 
-// ChildNode represents a single child node returned by the List Child Nodes API.
+// ChildNode represents a direct child node associated
+// with a parent node.
 type ChildNode struct {
 	// ChildId is the unique identifier of the child node.
 	ChildId string `json:"childId"`
 
-	// Alias is the alias assigned to the child node under the parent node.
+	// Alias is the human-readable alias of the child node.
 	Alias string `json:"alias"`
 
-	// CreatedAt indicates the timestamp when the child node was created.
+	// CreatedAt is the timestamp (in milliseconds since epoch)
+	// when the child node was created.
 	CreatedAt int64 `json:"createdAt"`
 }
 
-// ListChildNodesResponse represents the response returned by the List Child Nodes API.
-type ListChildNodesResponse struct {
-	// Success indicates whether the request was processed successfully.
-	Success bool `json:"success"`
+// listChildNodesAPIResponse represents the raw response
+// returned by the List Child Nodes API.
+//
+// This structure is internal and converted into
+// ListChildNodesResult before being returned to the caller.
+type listChildNodesAPIResponse struct {
+	common.BaseResponse
 
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
-
-	// TotalCount indicates the total number of child nodes associated with the parent.
+	// TotalCount represents the total number of child nodes
+	// available for the given parent node.
 	TotalCount int `json:"totalCount"`
 
-	// Count indicates the number of child nodes returned in this response.
+	// Count represents the number of child nodes returned
+	// in the current response.
 	Count int `json:"count"`
 
-	// Next indicates the offset value for the next page of results.
+	// Next represents the offset value to be used
+	// for fetching the next page of results.
 	Next int `json:"next"`
 
-	// Data contains the list of child nodes returned in this response.
+	// Data contains the list of child nodes.
 	Data []ChildNode `json:"data"`
 }
 
-// ListChildNodes retrieves the list of child nodes associated with a given parent node.
+// ListChildNodesResult represents the structured result
+// returned after successfully fetching child nodes.
+type ListChildNodesResult struct {
+	// TotalCount is the total number of child nodes
+	// associated with the parent node.
+	TotalCount int
+
+	// Count is the number of child nodes returned
+	// in the current request.
+	Count int
+
+	// Next is the offset to be used for the next
+	// pagination request.
+	Next int
+
+	// Nodes contains the list of retrieved child nodes.
+	Nodes []ChildNode
+}
+
+// ListChildNodes retrieves the list of direct child nodes
+// for a given parent node.
 //
-// This method performs the following operations:
-//  1. Validates the request payload and ensures ParentId is provided.
-//  2. Applies default pagination values if Limit or Offset are out of bounds.
-//  3. Marshals the request payload into JSON.
-//  4. Constructs an HTTP POST request to the List Child Nodes API endpoint.
-//  5. Executes the HTTP request using the NodeManagement's HTTP client.
-//  6. Decodes the API response into ListChildNodesResponse.
-//  7. Checks API response status and maps API errors into structured SDK errors.
+// This method supports pagination using limit and offset.
+// If limit or offset values are invalid, the SDK applies
+// sensible defaults.
+//
+// Steps performed by this method:
+//  1. Validate the request payload.
+//  2. Normalize pagination parameters.
+//  3. Marshal the request into JSON.
+//  4. Build and execute the HTTP request.
+//  5. Decode and validate the API response.
 //
 // Parameters:
-//   - ctx: Context for controlling request cancellation and timeout.
-//   - req: Pointer to ListChildNodesRequest containing parent node ID and pagination info.
+//   - ctx: Context used to manage request lifecycle,
+//     cancellation, and deadlines.
+//   - req: Pointer to ListChildNodesRequest containing
+//     parent node ID and pagination options.
 //
 // Returns:
-//   - *ListChildNodesResponse: Contains child nodes and pagination metadata on success.
-//   - error: Returns nil on success, otherwise a sentinel error or *errors.AnedyaError
-//     if validation, network, or API errors occur.
+//   - (*ListChildNodesResult, nil) on success.
+//   - (nil, error) for validation, network, or API errors.
 func (nm *NodeManagement) ListChildNodes(
 	ctx context.Context,
 	req *ListChildNodesRequest,
-) (*ListChildNodesResponse, error) {
+) (*ListChildNodesResult, error) {
 
-	// Validate request
+	// validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "list child nodes request cannot be nil",
@@ -94,6 +125,7 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
+	// validate parent node ID
 	if req.ParentId == "" {
 		return nil, &errors.AnedyaError{
 			Message: "parent id is required to list child nodes",
@@ -101,7 +133,7 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Apply pagination defaults
+	// normalize pagination values
 	if req.Limit <= 0 || req.Limit > 1000 {
 		req.Limit = 100
 	}
@@ -109,10 +141,10 @@ func (nm *NodeManagement) ListChildNodes(
 		req.Offset = 0
 	}
 
-	// Endpoint
+	// build API URL
 	url := fmt.Sprintf("%s/v1/node/child/list", nm.baseURL)
 
-	// Marshal request
+	// encode request body
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -121,7 +153,7 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Build HTTP request
+	// create HTTP request
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -135,7 +167,11 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Execute HTTP request
+	// set headers
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+
+	// execute request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -145,8 +181,8 @@ func (nm *NodeManagement) ListChildNodes(
 	}
 	defer resp.Body.Close()
 
-	// Decode response
-	var apiResp ListChildNodesResponse
+	// decode response
+	var apiResp listChildNodesAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode ListChildNodes response",
@@ -154,10 +190,16 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// Centralized API error handling
+	// HTTP-level or API-level error
 	if resp.StatusCode != http.StatusOK || !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	return &apiResp, nil
+	// success
+	return &ListChildNodesResult{
+		TotalCount: apiResp.TotalCount,
+		Count:      apiResp.Count,
+		Next:       apiResp.Next,
+		Nodes:      apiResp.Data,
+	}, nil
 }

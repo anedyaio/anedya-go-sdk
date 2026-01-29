@@ -9,7 +9,6 @@ import (
 	"github.com/anedyaio/anedya-go-sdk/deviceLogs"
 	"github.com/anedyaio/anedya-go-sdk/health"
 	"github.com/anedyaio/anedya-go-sdk/nodes"
-	valuestore "github.com/anedyaio/anedya-go-sdk/valueStore"
 	"github.com/anedyaio/anedya-go-sdk/variable"
 )
 

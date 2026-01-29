@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -29,15 +30,7 @@ type CreateNodeRequest struct {
 
 // CreateNodeResponse represents the response returned by the Create Node API.
 type CreateNodeResponse struct {
-	// Success indicates whether the node was created successfully.
-	Success bool `json:"success"`
-
-	// Error contains a human-readable error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is a machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 
 	// NodeId is the unique identifier assigned to the newly created node.
 	NodeId string `json:"nodeId,omitempty"`

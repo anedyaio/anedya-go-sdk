@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -33,16 +34,13 @@ type AddChildNodeRequest struct {
 	ChildNodes []ChildNodeRequest `json:"childNodes"`
 }
 
-// AddChildNodeResponse represents the response returned by the Add Child Node API.
+// AddChildNodeResponse represents the response returned by
+// the Add Child Node API.
+//
+// It embeds common.BaseResponse to provide standard
+// success, error message, and reason code fields.
 type AddChildNodeResponse struct {
-	// Success indicates whether the Add Child Node operation was successful.
-	Success bool `json:"success"`
-
-	// Error contains the human-readable error message when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode is the machine-readable error code used for SDK error mapping.
-	ReasonCode string `json:"reasonCode,omitempty"`
+	common.BaseResponse
 }
 
 // AddChildNode attaches one or more child nodes to a parent node in the Anedya platform.
