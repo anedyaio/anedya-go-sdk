@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -54,7 +55,7 @@ type VariableListItem struct {
 // ListAllVariableResponse represents the response returned by
 // the List Variables API endpoint.
 type ListAllVariableResponse struct {
-	BaseResponse
+	common.BaseResponse
 
 	// CurrentCount indicates the number of variables returned
 	// in the current response.
@@ -156,9 +157,6 @@ func (v *VariableManagement) ListAllVariable(ctx context.Context, limit int, off
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// 4. Execute request
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
@@ -185,11 +183,6 @@ func (v *VariableManagement) ListAllVariable(ctx context.Context, limit int, off
 			Message: "failed to decode ListAllVariable response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// 7. Handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// 8. Handle API-level errors

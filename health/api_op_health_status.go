@@ -163,11 +163,6 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
-	}
-
 	// handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)

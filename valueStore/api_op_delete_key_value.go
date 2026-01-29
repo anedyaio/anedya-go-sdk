@@ -110,9 +110,6 @@ func (v *ValueStoreManagement) DeleteKeyValuePair(ctx context.Context, input *De
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// 4. Execute request
 	resp, err := v.httpClient.Do(req)
 	if err != nil {
@@ -139,11 +136,6 @@ func (v *ValueStoreManagement) DeleteKeyValuePair(ctx context.Context, input *De
 			Message: "failed to decode delete key value pair response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// 7. Handle HTTP-level errors
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// 8. Handle API-level errors.

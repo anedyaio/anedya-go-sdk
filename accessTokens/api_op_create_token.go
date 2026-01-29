@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/anedyaio/anedya-go-sdk/common"
 	"github.com/anedyaio/anedya-go-sdk/errors"
 )
 
@@ -43,32 +44,6 @@ type Token struct {
 	// Token is the actual secret value used for authentication
 	// in API requests.
 	Token string `json:"token"`
-}
-
-// AccessTokenManagement provides methods to create, revoke,
-// and manage access tokens using the Anedya API.
-//
-// It wraps an HTTP client and a base URL used to construct requests.
-type AccessTokenManagement struct {
-
-	// httpClient is the underlying HTTP client used to
-	// perform API requests.
-	httpClient *http.Client
-
-	// baseURL is the root API endpoint used for all
-	// access token management requests.
-	baseURL string
-}
-
-// NewAccessTokenManagement creates a new AccessTokenManagement client.
-//
-// The provided http.Client is used for all network communication,
-// and baseURL specifies the API server address.
-func NewAccessTokenManagement(c *http.Client, baseURL string) *AccessTokenManagement {
-	return &AccessTokenManagement{
-		httpClient: c,
-		baseURL:    baseURL,
-	}
 }
 
 // Policy represents the access policy attached to an access token.
@@ -108,26 +83,10 @@ type CreateNewAccessTokenRequest struct {
 	Policy Policy `json:"policy"`
 }
 
-// BaseResponse represents common fields returned by all
-// Anedya API responses.
-type BaseResponse struct {
-
-	// Success indicates whether the API request was successful.
-	Success bool `json:"success"`
-
-	// Error contains the error message returned by the API
-	// when Success is false.
-	Error string `json:"error"`
-
-	// ReasonCode contains the machine-readable error code
-	// used for SDK error mapping.
-	ReasonCode string `json:"reasonCode"`
-}
-
 // CreateNewAccessTokenResponse represents the response returned by
 // the Create Access Token API endpoint.
 type CreateNewAccessTokenResponse struct {
-	BaseResponse
+	common.BaseResponse
 
 	// TokenID is the identifier of the newly created token.
 	TokenID string `json:"tokenId"`
@@ -272,9 +231,6 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 		}
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
 	// Send the HTTP request to the API server
 	resp, err := t.httpClient.Do(req)
 	if err != nil {
@@ -302,11 +258,6 @@ func (t *AccessTokenManagement) CreateNewAccessToken(ctx context.Context, input 
 			Message: "failed to decode create token response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
-	}
-
-	// Handle HTTP-level errors.
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
 	// Handle API-level errors.
