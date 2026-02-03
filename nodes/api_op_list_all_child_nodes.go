@@ -167,10 +167,6 @@ func (nm *NodeManagement) ListChildNodes(
 		}
 	}
 
-	// set headers
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Accept", "application/json")
-
 	// execute request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
@@ -183,7 +179,7 @@ func (nm *NodeManagement) ListChildNodes(
 
 	// decode response
 	var apiResp listChildNodesAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode ListChildNodes response",
 			Err:     errors.ErrResponseDecodeFailed,

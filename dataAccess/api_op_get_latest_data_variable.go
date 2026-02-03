@@ -141,7 +141,7 @@ func (dm *DataManagement) GetLatestData(
 
 	// decode API response
 	var apiResp getLatestDataAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetLatestData response",
 			Err:     errors.ErrResponseDecodeFailed,

@@ -92,10 +92,6 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// set request headers
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Accept", "application/json")
-
 	// send HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
@@ -108,7 +104,7 @@ func (nm *NodeManagement) GetNodeDetails(
 
 	// decode API response
 	var apiResp getNodeDetailsAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetNodeDetails response",
 			Err:     errors.ErrResponseDecodeFailed,

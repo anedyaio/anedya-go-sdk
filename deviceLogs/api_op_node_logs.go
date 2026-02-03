@@ -175,7 +175,7 @@ func (dm *DeviceLogManagement) GetLogs(
 
 	// decode API response
 	var apiResp getLogsAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetLogs response",
 			Err:     errors.ErrResponseDecodeFailed,

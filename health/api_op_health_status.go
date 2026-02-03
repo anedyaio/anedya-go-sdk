@@ -156,7 +156,7 @@ func (hm *HealthManagement) GetHealthStatus(
 
 	// decode API response
 	var apiResp healthStatusAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode health status response",
 			Err:     errors.ErrResponseDecodeFailed,

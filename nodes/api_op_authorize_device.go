@@ -116,7 +116,7 @@ func (nm *NodeManagement) AuthorizeDevice(
 
 	// Decode response JSON
 	var apiResp AuthorizeDeviceResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
 			Message: "failed to decode AuthorizeDevice response",
 			Err:     errors.ErrResponseDecodeFailed,
