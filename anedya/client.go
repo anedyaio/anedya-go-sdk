@@ -6,6 +6,7 @@ import (
 
 	accesstokens "github.com/anedyaio/anedya-go-sdk/accessTokens"
 	"github.com/anedyaio/anedya-go-sdk/aggregations"
+	"github.com/anedyaio/anedya-go-sdk/commands"
 	"github.com/anedyaio/anedya-go-sdk/dataAccess"
 	"github.com/anedyaio/anedya-go-sdk/deviceLogs"
 	"github.com/anedyaio/anedya-go-sdk/health"
@@ -29,6 +30,7 @@ type Client struct {
 	HealthManagement      *health.HealthManagement
 	ValueStoreManagement  *valuestore.ValueStoreManagement
 	AggregationManagement *aggregations.AggregationsManagement
+	CommandManagement     *commands.CommandManagement
 }
 
 func NewClient(baseURL, apiKey string) *Client {
@@ -52,6 +54,7 @@ func NewClient(baseURL, apiKey string) *Client {
 		HealthManagement:      health.NewHealthManagement(hc, baseURL),
 		ValueStoreManagement:  valuestore.NewValueStoreManagement(hc, baseURL),
 		AggregationManagement: aggregations.NewAggregationsManagement(hc, baseURL),
+		CommandManagement:     commands.NewCommandManagement(hc, baseURL),
 	}
 }
 
