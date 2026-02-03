@@ -75,6 +75,13 @@ var codeMap = map[string]error{
 	"fa::invalidexpiry": ErrExpiryRequried,
 	"fa::tokennofound":  ErrInvalidToken,
 
+	// Commands API errors
+	"cmd::invalidexpiry": ErrInvalidExpiry,
+	"cmd::unknowntype":   ErrInvalidCommandType,
+	"cmd::notfound":      ErrCommandNotFound,
+	"cmd::invalidfilter": ErrInvalidFilter,
+	"cmd::cmdidtoolong":  ErrInvalidCommandID,
+
 	// valuestore errors
 	"vs::invalidscope":   ErrInvalidNamespaceScope,
 	"vs::invalidtype":    ErrInvalidValueType,
