@@ -134,7 +134,7 @@ func (nm *NodeManagement) AddChildNode(ctx context.Context, req *AddChildNodeReq
 
 	// decode API response
 	var apiResp AddChildNodeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
 			Message: "failed to decode AddChildNode response",
 			Err:     errors.ErrResponseDecodeFailed,

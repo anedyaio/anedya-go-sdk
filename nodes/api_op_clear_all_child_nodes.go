@@ -104,7 +104,7 @@ func (nm *NodeManagement) ClearChildNodes(
 
 	// Decode response JSON
 	var apiResp ClearChildNodesResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
 			Message: "failed to decode ClearChildNodes response",
 			Err:     errors.ErrResponseDecodeFailed,

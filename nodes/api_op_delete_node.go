@@ -99,7 +99,7 @@ func (nm *NodeManagement) DeleteNode(
 
 	// Decode response JSON
 	var apiResp DeleteNodeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
 			Message: "failed to decode DeleteNode response",
 			Err:     errors.ErrResponseDecodeFailed,

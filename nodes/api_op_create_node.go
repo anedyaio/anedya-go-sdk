@@ -105,7 +105,7 @@ func (nm *NodeManagement) CreateNode(
 
 	// Decode response JSON
 	var apiResp CreateNodeResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode CreateNode response",
 			Err:     errors.ErrResponseDecodeFailed,

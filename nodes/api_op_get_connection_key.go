@@ -99,7 +99,7 @@ func (nm *NodeManagement) GetConnectionKey(
 
 	// Decode response JSON
 	var apiResp GetConnectionKeyResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return "", &errors.AnedyaError{
 			Message: "failed to decode GetConnectionKey response",
 			Err:     errors.ErrResponseDecodeFailed,

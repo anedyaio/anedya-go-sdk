@@ -161,7 +161,7 @@ func (nm *NodeManagement) GetNodeList(
 
 	// decode API response
 	var apiResp getNodeListAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetNodeList response",
 			Err:     errors.ErrResponseDecodeFailed,

@@ -317,7 +317,7 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 
 	// decode API response
 	var apiResp getAggregationAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode aggregation response",
 			Err:     errors.ErrResponseDecodeFailed,

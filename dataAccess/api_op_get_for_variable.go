@@ -167,7 +167,7 @@ func (dm *DataManagement) GetData(
 
 	// decode API response
 	var apiResp getDataAPIResponse
-	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetData response",
 			Err:     errors.ErrResponseDecodeFailed,
