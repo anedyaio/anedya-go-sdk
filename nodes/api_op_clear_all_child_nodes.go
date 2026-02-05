@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -50,7 +51,7 @@ func (nm *NodeManagement) ClearChildNodes(
 	req *ClearChildNodesRequest,
 ) error {
 
-	// Validate request object
+	// 1. Validate request
 	if req == nil {
 		return &errors.AnedyaError{
 			Message: "clear child nodes request cannot be nil",
@@ -58,7 +59,6 @@ func (nm *NodeManagement) ClearChildNodes(
 		}
 	}
 
-	// Validate ParentId
 	if req.ParentId == "" {
 		return &errors.AnedyaError{
 			Message: "parentId is required to clear child nodes",
@@ -66,55 +66,63 @@ func (nm *NodeManagement) ClearChildNodes(
 		}
 	}
 
-	// Construct API endpoint URL
-	url := fmt.Sprintf("%s/v1/node/child/clear", nm.baseURL)
-
-	// Marshal request payload to JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to encode ClearChildNodes request",
+			Message: "failed to encode clear child nodes request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// Build HTTP POST request with context
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/node/child/clear", nm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to build ClearChildNodes request",
+			Message: "failed to build clear child nodes request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// Execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to execute ClearChildNodes request",
+			Message: "failed to execute clear child nodes request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &errors.AnedyaError{
+			Message: "failed to read clear child nodes response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp ClearChildNodesResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to decode ClearChildNodes response",
+			Message: "failed to decode clear child nodes response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// handle HTTP or API level error
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// 8. Success
 	return nil
 }

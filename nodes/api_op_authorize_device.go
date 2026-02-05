@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -54,7 +55,7 @@ func (nm *NodeManagement) AuthorizeDevice(
 	req *AuthorizeDeviceRequest,
 ) error {
 
-	// Validate request object
+	// 1. Validate request
 	if req == nil {
 		return &errors.AnedyaError{
 			Message: "authorize device request cannot be nil",
@@ -78,55 +79,63 @@ func (nm *NodeManagement) AuthorizeDevice(
 		}
 	}
 
-	// Construct API endpoint URL
-	url := fmt.Sprintf("%s/v1/node/authorize", nm.baseURL)
-
-	// Marshal request payload to JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request body
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to encode AuthorizeDevice request",
+			Message: "failed to encode authorize device request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// Build HTTP POST request with context
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/node/authorize", nm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to build AuthorizeDevice request",
+			Message: "failed to build authorize device request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// Execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to execute AuthorizeDevice request",
+			Message: "failed to execute authorize device request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &errors.AnedyaError{
+			Message: "failed to read authorize device response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp AuthorizeDeviceResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to decode AuthorizeDevice response",
+			Message: "failed to decode authorize device response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// handle HTTP or API level error
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// 8. Success
 	return nil
 }

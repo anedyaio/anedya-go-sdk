@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -82,7 +83,7 @@ func (cm *CommandManagement) SendCommand(
 	req *SendCommandRequest,
 ) (*SendCommandResult, error) {
 
-	// request must not be nil
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "send command request cannot be nil",
@@ -90,7 +91,6 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// validate node ID
 	if req.NodeId == "" {
 		return nil, &errors.AnedyaError{
 			Message: "nodeId is required",
@@ -98,7 +98,6 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// validate command name
 	if req.Command == "" {
 		return nil, &errors.AnedyaError{
 			Message: "command is required",
@@ -106,7 +105,6 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// validate payload
 	if req.Data == "" {
 		return nil, &errors.AnedyaError{
 			Message: "data is required",
@@ -114,7 +112,6 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// validate data type
 	if req.Type != "string" && req.Type != "binary" {
 		return nil, &errors.AnedyaError{
 			Message: "type must be either 'string' or 'binary'",
@@ -122,7 +119,6 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// validate expiry
 	if req.Expiry < 0 {
 		return nil, &errors.AnedyaError{
 			Message: "expiry must be a positive value",
@@ -130,11 +126,11 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// build API URL
+	// 2. Build API URL
 	url := fmt.Sprintf("%s/v1/commands/send", cm.baseURL)
 
-	// convert request to JSON
-	body, err := json.Marshal(req)
+	// 3. Marshal request to JSON
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to encode send command request",
@@ -142,12 +138,12 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// create HTTP request
+	// 4. Create HTTP request
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -156,7 +152,7 @@ func (cm *CommandManagement) SendCommand(
 		}
 	}
 
-	// execute request
+	// 5. Execute request
 	resp, err := cm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -166,21 +162,30 @@ func (cm *CommandManagement) SendCommand(
 	}
 	defer resp.Body.Close()
 
-	// decode response
+	// 6. Read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read send command response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 7. Decode response
 	var apiResp sendCommandAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode send command response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// API-level error handling
+	// 8. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
+	// 9. Success
 	return &SendCommandResult{
 		CommandId: apiResp.CommandId,
 	}, nil

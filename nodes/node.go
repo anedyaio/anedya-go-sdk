@@ -14,18 +14,18 @@ import (
 // It also holds a reference to NodeManagement, allowing it to perform node-level operations
 // like fetching details, updating, or managing child nodes directly.
 type Node struct {
-	NodeId          string `json:"nodeId,omitempty"`          // Unique identifier for this node
-	NodeName        string `json:"nodeName,omitempty"`        // Human-readable name for the node
-	NodeDescription string `json:"nodeDescription,omitempty"` // Optional description of the node
-	NodeIdentifier  string `json:"nodeIdentifier,omitempty"`  // Unique external identifier, if any
-	BindingStatus   bool   `json:"bindingStatus,omitempty"`   // Whether the node is bound to a device
-	NodeBindingKey  string `json:"nodeBindingKey,omitempty"`  // Key used for binding operations
-	ConnectionKey   string `json:"connectionKey,omitempty"`   // Key used for device connections
-	CreatedAt       string `json:"createdAt,omitempty"`       // Creation timestamp as string
-	Suspended       bool   `json:"suspended,omitempty"`       // Node suspension status
-	Modified        string `json:"modified,omitempty"`        // Last modification timestamp
-	Tags            []Tag  `json:"tags,omitempty"`            // Optional list of tags for categorisation
-	PreauthId       string `json:"preauthId,omitempty"`       // Preauthorization ID for node
+	NodeId          string `json:"node_id,omitempty"`          // Unique identifier for this node
+	NodeName        string `json:"node_name,omitempty"`        // Human-readable name for the node
+	NodeDescription string `json:"node_description,omitempty"` // Optional description of the node
+	NodeIdentifier  string `json:"node_identifier,omitempty"`  // Unique external identifier, if any
+	BindingStatus   bool   `json:"binding_status,omitempty"`   // Whether the node is bound to a device
+	NodeBindingKey  string `json:"node_binding_key,omitempty"` // Key used for binding operations
+	ConnectionKey   string `json:"connection_key,omitempty"`   // Key used for device connections
+	CreatedAt       string `json:"created_at,omitempty"`       // Creation timestamp as string
+	Suspended       bool   `json:"suspended,omitempty"`        // Node suspension status
+	Modified        string `json:"modified,omitempty"`         // Last modification timestamp
+	Tags            []Tag  `json:"tags,omitempty"`             // Optional list of tags for categorisation
+	PreauthId       string `json:"preauth_id,omitempty"`       // Preauthorization ID for node
 
 	// nodeManagement is an internal reference to the NodeManagement client.
 	// It is required for all node-related API calls.
