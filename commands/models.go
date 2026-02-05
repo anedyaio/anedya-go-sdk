@@ -1,80 +1,84 @@
 package commands
 
-// CommandStatus represents the current status of a command
+// CommandStatus represents the execution state of a command
+// issued to a node within the Anedya platform.
 type CommandStatus string
 
 const (
-	StatusPending     CommandStatus = "pending"     // Command is queued, not yet received by device
-	StatusReceived    CommandStatus = "received"    // Command received by device
-	StatusProcessing  CommandStatus = "processing"  // Command is being processed by device
-	StatusSuccess     CommandStatus = "success"     // Command executed successfully
-	StatusFailure     CommandStatus = "failure"     // Command execution failed
-	StatusInvalidated CommandStatus = "invalidated" // Command was invalidated/cancelled
+	// StatusPending indicates the command has been created
+	// but not yet delivered to the target node.
+	StatusPending CommandStatus = "pending"
+
+	// StatusReceived indicates the command has been received
+	// by the target node but not yet processed.
+	StatusReceived CommandStatus = "received"
+
+	// StatusProcessing indicates the command is currently
+	// being executed by the target node.
+	StatusProcessing CommandStatus = "processing"
+
+	// StatusSuccess indicates the command executed successfully.
+	StatusSuccess CommandStatus = "success"
+
+	// StatusFailure indicates the command execution failed.
+	StatusFailure CommandStatus = "failure"
+
+	// StatusInvalidated indicates the command was invalidated
+	// before execution due to expiry or manual cancellation.
+	StatusInvalidated CommandStatus = "invalidated"
 )
 
-// CommandDataType represents the type of command data
+// CommandDataType represents the format of command payload
+// or acknowledgement data exchanged with nodes.
 type CommandDataType string
 
 const (
-	DataTypeString CommandDataType = "string" // Text/JSON data
-	DataTypeBinary CommandDataType = "binary" // Binary data
+	// DataTypeString indicates plain text data.
+	DataTypeString CommandDataType = "string"
+
+	// DataTypeBinary indicates binary or encoded data.
+	DataTypeBinary CommandDataType = "binary"
 )
 
-// CommandFilter contains filter criteria for listing commands
-type CommandFilter struct {
-	// IssuedAfter filters commands issued after this timestamp
-	IssuedAfter string `json:"issuedAfter,omitempty"`
-
-	// IssuedBefore filters commands issued before this timestamp
-	IssuedBefore string `json:"issuedBefore,omitempty"`
-
-	// NodeId filters commands for a specific node
-	NodeId string `json:"nodeId,omitempty"`
-
-	// Status filters commands by their current status
-	Status []CommandStatus `json:"status,omitempty"`
-
-	// Identifier filters commands by their identifier
-	Identifier string `json:"identifier,omitempty"`
-}
-
-// CommandInfo represents basic information about a command
+// CommandInfo contains the core metadata associated
+// with a command issued to a node.
 type CommandInfo struct {
-	// Id is the unique identifier for the command
-	Id string `json:"id"`
+	// CommandId is the unique identifier of the command.
+	CommandId string `json:"commandId"`
 
-	// Identifier is a user-defined identifier for the command
-	Identifier string `json:"identifier"`
+	// Command is the name or type of the command issued.
+	Command string `json:"command"`
 
-	// Status is the current status of the command
+	// Status represents the current execution status of the command.
 	Status CommandStatus `json:"status"`
 
-	// UpdatedOn is the Unix timestamp (milliseconds) when the command was last updated
+	// UpdatedOn indicates the last status update timestamp (Unix milliseconds).
 	UpdatedOn int64 `json:"updatedOn"`
 
-	// Expired indicates whether the command has expired
+	// Expired indicates whether the command has expired.
 	Expired bool `json:"expired"`
 
-	// Expiry is the Unix timestamp (milliseconds) when the command will expire
+	// Expiry represents the expiry timestamp of the command (Unix milliseconds).
 	Expiry int64 `json:"expiry"`
 
-	// IssuedAt is the Unix timestamp (milliseconds) when the command was issued
+	// IssuedAt indicates when the command was originally issued (Unix milliseconds).
 	IssuedAt int64 `json:"issuedAt"`
 }
 
-// CommandDetails represents detailed information about a command
+// CommandDetails extends CommandInfo by including
+// payload and acknowledgement data associated with the command.
 type CommandDetails struct {
 	CommandInfo
 
-	// AckData is the acknowledgment data returned by the device
+	// AckData contains acknowledgement data returned by the node.
 	AckData string `json:"ackdata,omitempty"`
 
-	// AckDataType is the type of acknowledgment data
-	AckDataType CommandDataType `json:"ackDataType,omitempty"`
+	// AckDataType specifies the format of the acknowledgement data.
+	AckDataType CommandDataType `json:"ackdatatype,omitempty"`
 
-	// Data is the command payload sent to the device
-	Data string `json:"data"`
+	// Data contains the original command payload.
+	Data string `json:"data,omitempty"`
 
-	// DataType is the type of command data
-	DataType CommandDataType `json:"dataType"`
+	// DataType specifies the format of the command payload.
+	DataType CommandDataType `json:"datatype,omitempty"`
 }

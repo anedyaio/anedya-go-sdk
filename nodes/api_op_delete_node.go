@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -45,7 +46,7 @@ func (nm *NodeManagement) DeleteNode(
 	req *DeleteNodeRequest,
 ) error {
 
-	// Validate request object
+	// 1. Validate request
 	if req == nil {
 		return &errors.AnedyaError{
 			Message: "delete node request cannot be nil",
@@ -53,7 +54,6 @@ func (nm *NodeManagement) DeleteNode(
 		}
 	}
 
-	// Validate NodeID
 	if req.NodeID == "" {
 		return &errors.AnedyaError{
 			Message: "node id is required to delete node",
@@ -61,56 +61,63 @@ func (nm *NodeManagement) DeleteNode(
 		}
 	}
 
-	// Construct API endpoint URL
-	url := fmt.Sprintf("%s/v1/node/delete", nm.baseURL)
-
-	// Marshal request payload to JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to encode DeleteNode request",
+			Message: "failed to encode delete node request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// Build HTTP POST request with context
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/node/delete", nm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to build DeleteNode request",
+			Message: "failed to build delete node request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// Execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to execute DeleteNode request",
+			Message: "failed to execute delete node request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &errors.AnedyaError{
+			Message: "failed to read delete node response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp DeleteNodeResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to decode DeleteNode response",
+			Message: "failed to decode delete node response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// API-level error
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Delete successful
+	// 8. Success
 	return nil
 }

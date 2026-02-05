@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -86,7 +87,7 @@ func (hm *HealthManagement) GetHealthStatus(
 	req *HealthStatusRequest,
 ) (*HealthStatusResult, error) {
 
-	// request must not be nil
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "health status request cannot be nil",
@@ -94,7 +95,6 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// at least one node is required
 	if len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "at least one node must be provided",
@@ -102,7 +102,6 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// validate threshold value
 	if req.LastContactThreshold <= 0 {
 		return nil, &errors.AnedyaError{
 			Message: "lastContactThreshold must be greater than zero",
@@ -110,7 +109,6 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// enforce maximum threshold
 	if req.LastContactThreshold > maxHealthThresholdSec {
 		return nil, &errors.AnedyaError{
 			Message: "lastContactThreshold cannot exceed 7 days",
@@ -118,11 +116,11 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// build API URL
+	// 2. Build API URL
 	url := fmt.Sprintf("%s/v1/health/status", hm.baseURL)
 
-	// convert request to JSON
-	body, err := json.Marshal(req)
+	// 3. Marshal request to JSON
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to encode health status request",
@@ -130,13 +128,8 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// create HTTP request with context
-	httpReq, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodPost,
-		url,
-		bytes.NewBuffer(body),
-	)
+	// 4. Create HTTP request
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to build health status request",
@@ -144,7 +137,7 @@ func (hm *HealthManagement) GetHealthStatus(
 		}
 	}
 
-	// execute HTTP request
+	// 5. Execute HTTP request
 	resp, err := hm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -154,21 +147,30 @@ func (hm *HealthManagement) GetHealthStatus(
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// 6. Read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read health status response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 7. Decode API response
 	var apiResp healthStatusAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode health status response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// handle API-level errors
+	// 8. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success: return clean SDK response
+	// 9. Return result
 	return &HealthStatusResult{
 		Data: apiResp.Data,
 	}, nil

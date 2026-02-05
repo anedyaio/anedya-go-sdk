@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -99,7 +100,7 @@ func (nm *NodeManagement) GetNodeList(
 	req *GetNodeListRequest,
 ) (*GetNodeListResult, error) {
 
-	// check if request is nil
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get node list request cannot be nil",
@@ -107,7 +108,7 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// validate limit range
+	// Validate limit range
 	if req.Limit <= 0 || req.Limit > 1000 {
 		return nil, &errors.AnedyaError{
 			Message: "limit must be between 1 and 1000",
@@ -115,7 +116,7 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// validate order field
+	// Validate order field
 	if req.Order != "" && req.Order != "asc" && req.Order != "desc" {
 		return nil, &errors.AnedyaError{
 			Message: "order must be either 'asc' or 'desc'",
@@ -123,59 +124,64 @@ func (nm *NodeManagement) GetNodeList(
 		}
 	}
 
-	// convert request to JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request body
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to encode GetNodeList request",
+			Message: "failed to encode get node list request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// build API URL
+	// 3. Build HTTP request
 	url := fmt.Sprintf("%s/v1/node/list", nm.baseURL)
-
-	// create HTTP request with context
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to build GetNodeList request",
+			Message: "failed to build get node list request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// send HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to execute GetNodeList request",
+			Message: "failed to execute get node list request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read get node list response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp getNodeListAPIResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to decode GetNodeList response",
+			Message: "failed to decode get node list response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// API-level error handling
+	// 7. API-level error handling
 	if !apiResp.Success {
-		sdkErr := errors.GetError(apiResp.ReasonCode, apiResp.Error)
-		// Return any other API errors
-		return nil, sdkErr
+		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Success
+	// 8. Success
 	return &GetNodeListResult{
 		CurrentCount: apiResp.CurrentCount,
 		TotalCount:   apiResp.TotalCount,

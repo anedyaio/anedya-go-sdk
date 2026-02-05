@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -59,7 +60,7 @@ func (nm *NodeManagement) CreateNode(
 	req *CreateNodeRequest,
 ) (*Node, error) {
 
-	// Validate request object
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "create node request cannot be nil",
@@ -67,57 +68,64 @@ func (nm *NodeManagement) CreateNode(
 		}
 	}
 
-	// Marshal request payload to JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request body
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to encode CreateNode request",
+			Message: "failed to encode create node request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// Construct API endpoint URL
+	// 3. Build HTTP request
 	url := fmt.Sprintf("%s/v1/node/create", nm.baseURL)
-
-	// Build HTTP POST request with context
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to build CreateNode request",
+			Message: "failed to build create node request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// Execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to execute CreateNode request",
+			Message: "failed to execute create node request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read create node response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp CreateNodeResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to decode CreateNode response",
+			Message: "failed to decode create node response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// Check for any error (HTTP or API-level)
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Success: return the newly created Node
+	// 8. Success: return Node
 	return &Node{
 		NodeId:          apiResp.NodeId,
 		NodeName:        req.NodeName,

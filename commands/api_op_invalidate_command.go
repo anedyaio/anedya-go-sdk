@@ -1,6 +1,5 @@
-// Package commands provides APIs to manage commands,
-// including issuing, tracking, and invalidating commands
-// within the Anedya platform.
+// Package commands provides APIs for issuing, tracking,
+// and managing device commands within the Anedya platform.
 package commands
 
 import (
@@ -8,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -17,50 +17,48 @@ import (
 // InvalidateCommandRequest represents the payload used to
 // invalidate or cancel a previously issued command.
 type InvalidateCommandRequest struct {
-	// Id is the unique identifier of the command
-	// to be invalidated.
-	Id string `json:"id"`
+	// CommandId is the unique identifier of the command
+	// that needs to be invalidated.
+	CommandId string `json:"commandId"`
 }
 
 // invalidateCommandAPIResponse represents the raw API response
-// returned by the invalidate command endpoint.
+// received from the backend before SDK transformation.
 type invalidateCommandAPIResponse struct {
 	common.BaseResponse
 }
 
 // InvalidateCommandResult represents the processed result
-// returned to SDK consumers after invalidation.
+// returned to SDK consumers after successful invalidation.
 type InvalidateCommandResult struct {
 	// Success indicates whether the command
 	// was successfully invalidated.
 	Success bool
 }
 
-// InvalidateCommand invalidates or cancels an existing command
-// in the Anedya platform so it will no longer be executed.
+// InvalidateCommand cancels or invalidates a previously issued command.
 //
-// Steps performed by this method:
-//  1. Validate the request payload and command identifier.
-//  2. Marshal the request into JSON format.
-//  3. Build and send a POST request to the invalidate command API.
-//  4. Decode the API response.
-//  5. Map API-level errors into structured SDK errors.
+// Workflow:
+//  1. Validate request object and command identifier.
+//  2. Marshal request into JSON.
+//  3. Send POST request to invalidate endpoint.
+//  4. Decode API response.
+//  5. Return structured SDK result.
 //
 // Parameters:
-//   - ctx: Context used to control request lifecycle,
-//     cancellation, and timeouts.
-//   - req: Pointer to InvalidateCommandRequest containing
-//     the command identifier.
+//   - ctx: Context used for cancellation and timeout control.
+//   - req: Pointer to InvalidateCommandRequest containing command ID.
 //
 // Returns:
 //   - (*InvalidateCommandResult, nil) if invalidation succeeds.
-//   - (nil, error) for validation, network, or API errors.
+//   - (nil, error) if validation, network, decoding,
+//     or API-level errors occur.
 func (cm *CommandManagement) InvalidateCommand(
 	ctx context.Context,
 	req *InvalidateCommandRequest,
 ) (*InvalidateCommandResult, error) {
 
-	// check if request is nil
+	// validate request object
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "invalidate command request cannot be nil",
@@ -68,18 +66,18 @@ func (cm *CommandManagement) InvalidateCommand(
 		}
 	}
 
-	// command ID must be provided
-	if req.Id == "" {
+	// validate command ID
+	if req.CommandId == "" {
 		return nil, &errors.AnedyaError{
 			Message: "command id is required",
 			Err:     errors.ErrInvalidCommandID,
 		}
 	}
 
-	// build API URL
+	// construct API endpoint URL
 	url := fmt.Sprintf("%s/v1/commands/invalidate", cm.baseURL)
 
-	// convert request to JSON
+	// encode request body
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -88,7 +86,7 @@ func (cm *CommandManagement) InvalidateCommand(
 		}
 	}
 
-	// create HTTP request with context
+	// build HTTP request
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
@@ -102,7 +100,7 @@ func (cm *CommandManagement) InvalidateCommand(
 		}
 	}
 
-	// send HTTP request
+	// execute HTTP request
 	resp, err := cm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -112,21 +110,30 @@ func (cm *CommandManagement) InvalidateCommand(
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read invalidate command response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// decode JSON response
 	var apiResp invalidateCommandAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode invalidate command response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// handle API-level errors
+	// handle API-level failure
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
+	// return structured result
 	return &InvalidateCommandResult{
 		Success: true,
 	}, nil

@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -58,7 +59,7 @@ func (nm *NodeManagement) GetNodeDetails(
 	req *GetNodeDetailsRequest,
 ) (map[string]Node, error) {
 
-	// check if request is nil or empty
+	// 1. Validate request
 	if req == nil || len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "node list cannot be empty",
@@ -66,56 +67,63 @@ func (nm *NodeManagement) GetNodeDetails(
 		}
 	}
 
-	// convert request to JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request body
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to encode GetNodeDetails request",
+			Message: "failed to encode get node details request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// build API URL
+	// 3. Build HTTP request
 	url := fmt.Sprintf("%s/v1/node/details", nm.baseURL)
-
-	// create HTTP request with context
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to build GetNodeDetails request",
+			Message: "failed to build get node details request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// send HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to execute GetNodeDetails request",
+			Message: "failed to execute get node details request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read get node details response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp getNodeDetailsAPIResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to decode GetNodeDetails response",
+			Message: "failed to decode get node details response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// Handle HTTP or API errors
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
+	// 8. Success
 	return apiResp.Data, nil
 }

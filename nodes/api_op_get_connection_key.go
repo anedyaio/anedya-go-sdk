@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -50,7 +51,7 @@ func (nm *NodeManagement) GetConnectionKey(
 	req *GetConnectionKeyRequest,
 ) (string, error) {
 
-	// Validate request object
+	// 1. Validate request
 	if req == nil {
 		return "", &errors.AnedyaError{
 			Message: "get connection key request cannot be nil",
@@ -66,51 +67,63 @@ func (nm *NodeManagement) GetConnectionKey(
 		}
 	}
 
-	// Construct API endpoint URL
-	url := fmt.Sprintf("%s/v1/node/getConnectionKey", nm.baseURL)
-
-	// Marshal request payload to JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request body
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return "", &errors.AnedyaError{
-			Message: "failed to encode GetConnectionKey request",
+			Message: "failed to encode get connection key request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// Build HTTP POST request with context
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/node/getConnectionKey", nm.baseURL)
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		url,
+		bytes.NewBuffer(requestBody),
+	)
 	if err != nil {
 		return "", &errors.AnedyaError{
-			Message: "failed to build GetConnectionKey request",
+			Message: "failed to build get connection key request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// Execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return "", &errors.AnedyaError{
-			Message: "failed to execute GetConnectionKey request",
+			Message: "failed to execute get connection key request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// Decode response JSON
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", &errors.AnedyaError{
+			Message: "failed to read get connection key response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp GetConnectionKeyResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return "", &errors.AnedyaError{
-			Message: "failed to decode GetConnectionKey response",
+			Message: "failed to decode get connection key response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// Handle HTTP or API-level errors
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return "", errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// Success: return the connection key
+	// 8. Success
 	return apiResp.ConnectionKey, nil
 }

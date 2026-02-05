@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -81,7 +82,7 @@ func (nm *NodeManagement) UpdateNode(
 	req *UpdateNodeRequest,
 ) error {
 
-	// Validate request object
+	// 1. Validate request
 	if req == nil {
 		return &errors.AnedyaError{
 			Message: "update node request cannot be nil",
@@ -108,7 +109,6 @@ func (nm *NodeManagement) UpdateNode(
 	// Validate each update operation
 	for i, u := range req.Updates {
 
-		// Update type must be specified
 		if u.Type == "" {
 			return &errors.AnedyaError{
 				Message: fmt.Sprintf("update[%d].type is required", i),
@@ -116,7 +116,6 @@ func (nm *NodeManagement) UpdateNode(
 			}
 		}
 
-		// Tag updates must contain a tag object
 		if u.Type == UpdateTag && u.Tag == nil {
 			return &errors.AnedyaError{
 				Message: fmt.Sprintf("update[%d].tag is required for tag update", i),
@@ -124,7 +123,6 @@ func (nm *NodeManagement) UpdateNode(
 			}
 		}
 
-		// Non-tag updates must contain a value
 		if u.Type != UpdateTag && u.Value == "" {
 			return &errors.AnedyaError{
 				Message: fmt.Sprintf("update[%d].value is required", i),
@@ -133,52 +131,59 @@ func (nm *NodeManagement) UpdateNode(
 		}
 	}
 
-	// Construct API endpoint URL
-	url := fmt.Sprintf("%s/v1/node/update", nm.baseURL)
-
-	// Marshal request payload into JSON
-	body, err := json.Marshal(req)
+	// 2. Encode request body
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to encode UpdateNode request",
+			Message: "failed to encode update node request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// Build HTTP POST request with context
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/node/update", nm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to build UpdateNode request",
+			Message: "failed to build update node request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// Execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to execute UpdateNode request",
+			Message: "failed to execute update node request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// Decode API response
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &errors.AnedyaError{
+			Message: "failed to read update node response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp UpdateNodeResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to decode UpdateNode response",
+			Message: "failed to decode update node response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// Handle HTTP or API-level errors
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}

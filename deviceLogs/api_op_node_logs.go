@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -89,7 +90,7 @@ func (dm *DeviceLogManagement) GetLogs(
 	req *GetLogsRequest,
 ) (*GetLogsResult, error) {
 
-	// validate request
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get logs request cannot be nil",
@@ -97,7 +98,6 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// node ID is mandatory
 	if req.NodeID == "" {
 		return nil, &errors.AnedyaError{
 			Message: "nodeid is required",
@@ -105,7 +105,6 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// from timestamp must be valid
 	if req.From <= 0 {
 		return nil, &errors.AnedyaError{
 			Message: "from timestamp must be valid",
@@ -113,7 +112,6 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// validate from/to timestamp range
 	if req.To != 0 && req.To < req.From {
 		return nil, &errors.AnedyaError{
 			Message: "invalid from/to timestamp range",
@@ -121,7 +119,6 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// validate limit bounds
 	if req.Limit < 0 || req.Limit > 1000 {
 		return nil, &errors.AnedyaError{
 			Message: "limit must be between 0 and 1000",
@@ -129,7 +126,6 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// validate order value
 	if req.Order != "" && req.Order != "asc" && req.Order != "desc" {
 		return nil, &errors.AnedyaError{
 			Message: "order must be asc or desc",
@@ -137,11 +133,8 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// build API URL
-	url := fmt.Sprintf("%s/v1/logs/getLogs", dm.baseURL)
-
-	// marshal request body
-	body, err := json.Marshal(req)
+	// 2. Encode request
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to encode GetLogs request",
@@ -149,12 +142,13 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// create HTTP request with context
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/logs/getLogs", dm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -163,7 +157,7 @@ func (dm *DeviceLogManagement) GetLogs(
 		}
 	}
 
-	// execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := dm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -173,21 +167,30 @@ func (dm *DeviceLogManagement) GetLogs(
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// 5. Read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read GetLogs response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode API response
 	var apiResp getLogsAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetLogs response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// handle API-level errors
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// return processed result
+	// 8. Return processed result
 	return &GetLogsResult{
 		Count: apiResp.Count,
 		Data:  apiResp.Data,

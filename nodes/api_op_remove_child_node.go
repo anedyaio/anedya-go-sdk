@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -47,8 +48,12 @@ type RemoveChildNodeResponse struct {
 // Returns:
 //   - error: Returns nil on success, otherwise a sentinel error or *errors.AnedyaError
 //     if validation, network, or API-level errors occur.
-func (nm *NodeManagement) RemoveChildNode(ctx context.Context, req *RemoveChildNodeRequest) error {
+func (nm *NodeManagement) RemoveChildNode(
+	ctx context.Context,
+	req *RemoveChildNodeRequest,
+) error {
 
+	// 1. Validate request
 	if req == nil {
 		return &errors.AnedyaError{
 			Message: "remove child node request cannot be nil",
@@ -68,45 +73,63 @@ func (nm *NodeManagement) RemoveChildNode(ctx context.Context, req *RemoveChildN
 		}
 	}
 
-	url := fmt.Sprintf("%s/v1/node/child/remove", nm.baseURL)
-	body, err := json.Marshal(req)
+	// 2. Encode request
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to encode RemoveChildNode request",
+			Message: "failed to encode remove child node request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/node/child/remove", nm.baseURL)
+	httpReq, err := http.NewRequestWithContext(
+		ctx,
+		http.MethodPost,
+		url,
+		bytes.NewBuffer(requestBody),
+	)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to build RemoveChildNode request",
+			Message: "failed to build remove child node request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// Execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to execute RemoveChildNode request",
+			Message: "failed to execute remove child node request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return &errors.AnedyaError{
+			Message: "failed to read remove child node response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp RemoveChildNodeResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return &errors.AnedyaError{
-			Message: "failed to decode RemoveChildNode response",
+			Message: "failed to decode remove child node response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// Handle all API errors automatically
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
+	// 8. Success
 	return nil
 }
