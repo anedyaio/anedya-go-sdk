@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -117,7 +118,7 @@ func (nm *NodeManagement) ListChildNodes(
 	req *ListChildNodesRequest,
 ) (*ListChildNodesResult, error) {
 
-	// validate request
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "list child nodes request cannot be nil",
@@ -141,57 +142,64 @@ func (nm *NodeManagement) ListChildNodes(
 		req.Offset = 0
 	}
 
-	// build API URL
-	url := fmt.Sprintf("%s/v1/node/child/list", nm.baseURL)
-
-	// encode request body
-	body, err := json.Marshal(req)
+	// 2. Encode request body
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to encode ListChildNodes request",
+			Message: "failed to encode list child nodes request",
 			Err:     errors.ErrRequestEncodeFailed,
 		}
 	}
 
-	// create HTTP request
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/node/child/list", nm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to build ListChildNodes request",
+			Message: "failed to build list child nodes request",
 			Err:     errors.ErrRequestBuildFailed,
 		}
 	}
 
-	// execute request
+	// 4. Execute request
 	resp, err := nm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to execute ListChildNodes request",
+			Message: "failed to execute list child nodes request",
 			Err:     errors.ErrRequestFailed,
 		}
 	}
 	defer resp.Body.Close()
 
-	// decode response
+	// 5. Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read list child nodes response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp listChildNodesAPIResponse
 	if err := json.Unmarshal(body, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
-			Message: "failed to decode ListChildNodes response",
+			Message: "failed to decode list child nodes response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// Centralized API error handling
+	// 7. API-level error handling
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
+	// 8. Success
 	return &ListChildNodesResult{
 		TotalCount: apiResp.TotalCount,
 		Count:      apiResp.Count,

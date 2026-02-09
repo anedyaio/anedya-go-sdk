@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -220,7 +221,7 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 	req *GetAggregationByTimeRequest,
 ) (*GetAggregationResult, error) {
 
-	// check if request is nil
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "aggregation request cannot be nil",
@@ -228,7 +229,6 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// variable name must be provided
 	if req.Variable == "" {
 		return nil, &errors.AnedyaError{
 			Message: "variable is required",
@@ -236,7 +236,6 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// validate time range
 	if req.From <= 0 || req.To <= 0 || req.From > req.To {
 		return nil, &errors.AnedyaError{
 			Message: "invalid from/to timestamp range",
@@ -244,7 +243,6 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// aggregation compute type must be provided
 	if req.Config.Aggregation.Compute == "" {
 		return nil, &errors.AnedyaError{
 			Message: "aggregation compute type is required",
@@ -252,7 +250,6 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// validate interval configuration
 	if req.Config.Interval.Measure == "" || req.Config.Interval.Interval <= 0 {
 		return nil, &errors.AnedyaError{
 			Message: "invalid aggregation interval configuration",
@@ -260,7 +257,6 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// validate filter configuration if present
 	if req.Config.Filter != nil {
 		if len(req.Config.Filter.Nodes) == 0 {
 			return nil, &errors.AnedyaError{
@@ -269,9 +265,7 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 			}
 		}
 
-		if req.Config.Filter.Type != FilterInclude &&
-			req.Config.Filter.Type != FilterExclude {
-
+		if req.Config.Filter.Type != FilterInclude && req.Config.Filter.Type != FilterExclude {
 			return nil, &errors.AnedyaError{
 				Message: "filter type must be include or exclude",
 				Err:     errors.ErrInvalidFilterType,
@@ -279,11 +273,11 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// build API URL
+	// 2. Build API URL
 	url := fmt.Sprintf("%s/v1/aggregates/variable/byTime", ac.baseURL)
 
-	// convert request to JSON
-	body, err := json.Marshal(req)
+	// 3. Marshal request
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to encode aggregation request",
@@ -291,12 +285,12 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// create HTTP request with context
+	// 4. Create HTTP request
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -305,7 +299,7 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 		}
 	}
 
-	// send HTTP request
+	// 5. Execute HTTP request
 	resp, err := ac.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -315,21 +309,30 @@ func (ac *AggregationsManagement) GetAggregationByTime(
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// 6. Read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read aggregation response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 7. Decode response
 	var apiResp getAggregationAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode aggregation response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// Handle API-level errors.
+	// 8. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// success
+	// 9. Return result
 	return &GetAggregationResult{
 		Variable: apiResp.Variable,
 		Config:   apiResp.Config,

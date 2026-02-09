@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -89,7 +90,7 @@ func (dm *DataManagement) GetData(
 	req *GetDataRequest,
 ) (*GetDataResult, error) {
 
-	// validate request
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get data request cannot be nil",
@@ -97,7 +98,6 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// variable name is mandatory
 	if req.Variable == "" {
 		return nil, &errors.AnedyaError{
 			Message: "variable is required",
@@ -105,7 +105,6 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// at least one node must be provided
 	if len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "at least one node must be provided",
@@ -113,7 +112,6 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// validate time range
 	if req.From <= 0 || req.To <= 0 || req.From > req.To {
 		return nil, &errors.AnedyaError{
 			Message: "invalid from/to timestamp range",
@@ -121,7 +119,6 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// validate order value
 	if req.Order != "" && req.Order != "asc" && req.Order != "desc" {
 		return nil, &errors.AnedyaError{
 			Message: "order must be asc or desc",
@@ -129,11 +126,8 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// build API URL
-	url := fmt.Sprintf("%s/v1/data/getData", dm.baseURL)
-
-	// marshal request body
-	body, err := json.Marshal(req)
+	// 2. Encode request
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to encode GetData request",
@@ -141,12 +135,13 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// create HTTP request with context
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/data/getData", dm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -155,7 +150,7 @@ func (dm *DataManagement) GetData(
 		}
 	}
 
-	// execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := dm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -165,21 +160,30 @@ func (dm *DataManagement) GetData(
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// 5. Read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read GetData response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp getDataAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetData response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// handle API-level errors
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// return processed result
+	// 8. Return processed result
 	return &GetDataResult{
 		Variable: apiResp.Variable,
 		Count:    apiResp.Count,

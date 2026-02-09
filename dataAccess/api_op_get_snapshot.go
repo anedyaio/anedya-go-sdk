@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/anedyaio/anedya-go-sdk/common"
@@ -73,7 +74,7 @@ func (dm *DataManagement) GetSnapshot(
 	req *GetSnapshotRequest,
 ) (*GetSnapshotResult, error) {
 
-	// validate request
+	// 1. Validate request
 	if req == nil {
 		return nil, &errors.AnedyaError{
 			Message: "get snapshot request cannot be nil",
@@ -81,7 +82,6 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// variable name is mandatory
 	if req.Variable == "" {
 		return nil, &errors.AnedyaError{
 			Message: "variable is required",
@@ -89,7 +89,6 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// timestamp must be valid
 	if req.Timestamp <= 0 {
 		return nil, &errors.AnedyaError{
 			Message: "timestamp must be greater than 0",
@@ -97,7 +96,6 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// at least one node must be provided
 	if len(req.Nodes) == 0 {
 		return nil, &errors.AnedyaError{
 			Message: "at least one node must be provided",
@@ -105,7 +103,6 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// validate node IDs
 	for i, node := range req.Nodes {
 		if node == "" {
 			return nil, &errors.AnedyaError{
@@ -115,11 +112,8 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// build API URL
-	url := fmt.Sprintf("%s/v1/data/snapshot", dm.baseURL)
-
-	// marshal request body
-	body, err := json.Marshal(req)
+	// 2. Encode request
+	requestBody, err := json.Marshal(req)
 	if err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to encode GetSnapshot request",
@@ -127,12 +121,13 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// create HTTP request with context
+	// 3. Build HTTP request
+	url := fmt.Sprintf("%s/v1/data/snapshot", dm.baseURL)
 	httpReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodPost,
 		url,
-		bytes.NewBuffer(body),
+		bytes.NewBuffer(requestBody),
 	)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -141,7 +136,7 @@ func (dm *DataManagement) GetSnapshot(
 		}
 	}
 
-	// execute HTTP request
+	// 4. Execute HTTP request
 	resp, err := dm.httpClient.Do(httpReq)
 	if err != nil {
 		return nil, &errors.AnedyaError{
@@ -151,21 +146,30 @@ func (dm *DataManagement) GetSnapshot(
 	}
 	defer resp.Body.Close()
 
-	// decode API response
+	// 5. Read response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, &errors.AnedyaError{
+			Message: "failed to read GetSnapshot response",
+			Err:     errors.ErrResponseReadFailed,
+		}
+	}
+
+	// 6. Decode response
 	var apiResp getSnapshotAPIResponse
-	if err := json.Unmarshal(body, &apiResp); err != nil {
+	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, &errors.AnedyaError{
 			Message: "failed to decode GetSnapshot response",
 			Err:     errors.ErrResponseDecodeFailed,
 		}
 	}
 
-	// handle API-level errors
+	// 7. Handle API-level errors
 	if !apiResp.Success {
 		return nil, errors.GetError(apiResp.ReasonCode, apiResp.Error)
 	}
 
-	// return processed result
+	// 8. Return processed result
 	return &GetSnapshotResult{
 		Data:  apiResp.Data,
 		Count: apiResp.Count,
