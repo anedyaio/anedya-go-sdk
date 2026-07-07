@@ -29,7 +29,7 @@ type CreateNodeRequest struct {
 	PreauthId string `json:"preauth_id,omitempty"`
 
 	// PreAuthorize is a flag to enable pre-authorization of the node.
-	PreAuthorize bool `json:"pre_authorize,omitempty"`
+	PreAuthorize bool `json:"preAuthorize,omitempty"`
 }
 
 // CreateNodeResponse represents the response returned by the Create Node API.
