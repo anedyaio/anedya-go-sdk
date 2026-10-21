@@ -59,6 +59,8 @@ var codeMap = map[string]error{
 	"variable::variablerequired": ErrVariableRequired,
 	"variable::typerequired":     ErrVariableTypeRequired,
 
+	"variable::notfound": ErrVariableNotFound,
+
 	// Health API errors
 	"health::limitexceeded": ErrHealthLimitExceeded,
 

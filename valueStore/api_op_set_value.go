@@ -65,7 +65,7 @@ type SetValueRequest struct {
 	Key string `json:"key"`
 
 	// Value contains the data to be stored.
-	Value string `json:"value"`
+	Value any `json:"value"`
 
 	// Type specifies the data type of the value.
 	Type ValueType `json:"type"`
